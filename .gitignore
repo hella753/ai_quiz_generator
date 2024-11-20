@@ -1,0 +1,9 @@
+.idea/
+__pycache__/
+ai_quiz_generator/__pycache__/
+quiz_app/__pycache__/
+quiz_app/migrations/__pycache__/
+user/__pycache__/
+user/migrations/__pycache__/
+.venv/
+.env

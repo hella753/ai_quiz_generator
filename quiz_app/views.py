@@ -15,15 +15,14 @@ class QuizViewSet(ModelViewSet):
         retrieve=QuizSerializer,
         list=QuizSerializer,
         create=InputSerializer,
-        default=QuizSerializer
+        default=QuizSerializer,
+        update=QuizSerializer
     )
 
-    def get_queryset(self):
-        if self.action == "list" or self.action == "retrieve":
-            return Quiz.objects.prefetch_related(
+    queryset = Quiz.objects.prefetch_related(
                 "questions",
                 "questions__answers"
-            )
+    )
 
     def get_permissions(self):
         if self.action == "create" or self.action == "list":

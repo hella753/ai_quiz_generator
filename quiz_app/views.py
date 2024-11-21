@@ -3,11 +3,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from quiz_app.permissions import IsCreater
-from quiz_app.utils.FileProcessor import FileProcessor
+from quiz_app.utils.file_processor import FileProcessor
 from quiz_app.models import Quiz
+from quiz_app.utils.ai_generator import QuizGenerator
 from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import QuizSerializer, InputSerializer
-from quiz_app.utils import generate_quiz
 
 
 class QuizViewSet(ModelViewSet):
@@ -19,25 +19,32 @@ class QuizViewSet(ModelViewSet):
         update=QuizSerializer
     )
 
-    queryset = Quiz.objects.prefetch_related(
+    def get_queryset(self):
+        if self.action != "list":
+            return Quiz.objects.prefetch_related(
                 "questions",
                 "questions__answers"
-    )
+            )
 
     def get_permissions(self):
-        if self.action == "create" or self.action == "list":
+        for_users = ["create", "list"]
+        for_creators = ["update", "destroy", "partial_update"]
+        if self.action in for_users:
             return [IsAuthenticated()]
-        if self.action == "update" or self.action == "destroy" or self.action == "partial_update":
+        if self.action in for_creators:
             return [IsCreater()]
         return super().get_permissions()
 
     def create(self, request, *args, **kwargs):
         file = request.FILES.get("file")
+        creator_input = request.data.get("_input")
+        quiz_generator = QuizGenerator(creator_input)
+
         if file:
             text = FileProcessor(file).process_file()
-            data = generate_quiz(request.data.get("_input"), text)
+            data = quiz_generator.generate_quiz(text)
         else:
-            data = generate_quiz(request.data.get("_input"))
+            data = quiz_generator.generate_quiz()
 
         if data != {}:
             serializer = QuizSerializer(data=data, context={"request": request})
@@ -53,4 +60,3 @@ class QuizViewSet(ModelViewSet):
             {},
             status=status.HTTP_400_BAD_REQUEST
         )
-

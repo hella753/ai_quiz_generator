@@ -1,3 +1,3 @@
 from .serializer_utils import *
-from .utils import *
-from .FileProcessor import FileProcessor
+from .ai_generator import QuizGenerator
+from .file_processor import FileProcessor

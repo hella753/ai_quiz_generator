@@ -57,7 +57,7 @@ class Answer(models.Model):
         blank=True,
         verbose_name=_("User")
     )
-    guest = models.CharField(max_length=25, null=True)
+    guest = models.CharField(max_length=25, null=True, blank=True)
 
     def __str__(self):
         return f"{self.answer}"

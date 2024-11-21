@@ -1,4 +1,3 @@
-from pydantic import ValidationError
 from rest_framework import serializers
 from quiz_app.models import Quiz, Question, Answer
 
@@ -86,3 +85,4 @@ class QuizSerializer(serializers.ModelSerializer):
 
 class InputSerializer(serializers.Serializer):
     _input = serializers.CharField(max_length=150)
+    file = serializers.FileField(required=False)

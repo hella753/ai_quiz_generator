@@ -28,7 +28,7 @@ class QuizViewSet(ModelViewSet):
     def get_permissions(self):
         if self.action == "create" or self.action == "list":
             return [IsAuthenticated()]
-        if self.action == "update" or self.action == "destroy":
+        if self.action == "update" or self.action == "destroy" or self.action == "partial_update":
             return [IsCreater()]
         return super().get_permissions()
 

@@ -1,10 +1,9 @@
 from django.utils import timezone
 from django.contrib.auth.base_user import AbstractBaseUser
-from django.contrib.auth.models import PermissionsMixin
+from django.contrib.auth.models import PermissionsMixin, AnonymousUser
 from django.utils.translation import gettext_lazy as _
 from django.db import models
 from .managers import UserManager
-
 
 
 class User(AbstractBaseUser, PermissionsMixin):
@@ -57,3 +56,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.username}"
+
+
+class GuestUser(AnonymousUser):
+    def __init__(self, name):
+        super().__init__()
+        self.name = name

@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+from decouple import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,8 +48,7 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = "user.User"
-
-
+AUTH_ANONYMOUS_USER = "user.GuestUser"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,6 +59,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+    'middlewares.unauthorized_middleware.AnonymousUserMiddleware'
 ]
 
 ROOT_URLCONF = 'ai_quiz_generator.urls'
@@ -137,6 +139,12 @@ LOCALE_PATHS = [
 
 USE_L10N = True
 
+EMAIL_USE_TLS = True
+EMAIL_PORT = 587
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = "interpredators.django@gmail.com"
+EMAIL_HOST_PASSWORD = config('EMAIL_KEY')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

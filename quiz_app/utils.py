@@ -8,10 +8,11 @@ client = OpenAI(api_key=API_KEY)
 
 
 def generate_quiz(prompt):
-    SYS_PROMPT = ("return JSON object. structure: 'name', 'questions' should have nested 'question' and 'answers' "
-                  "list. If quiz is multiple choice: 'answers' should have 'answer', 'correct': bool, 'score': 1.00 "
-                  "or 0.00. If questions are open 'answers' should be an empty list. Dont Write anything rather then "
-                  "just object. not even json in the beginning")
+    SYS_PROMPT = ("return JSON object. structure: 'name', 'questions' should have nested 'question', 'score': 1.00"
+                  "and 'answers' list. If quiz is multiple choice: 'answers' should have 'answer', 'correct': bool"
+                  "If questions are open 'answers' should be an empty list. Dont Write anything rather then "
+                  "just object. not even json in the beginning. If user says that he needs more than 10 questions"
+                  "dont generate anything")
 
     completion = client.chat.completions.create(
         model="gpt-4o-mini",

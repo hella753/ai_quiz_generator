@@ -3,6 +3,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from quiz_app.permissions import IsCreater
+from quiz_app.utils.email_sender import EmailSender
 from quiz_app.utils.file_processor import FileProcessor
 from quiz_app.models import Quiz, Question, Answer, UserAnswer
 from quiz_app.utils.ai_generator import QuizGenerator
@@ -20,17 +21,13 @@ from rest_framework.decorators import action
 
 class QuizViewSet(ModelViewSet):
     serializer_class = SerializerFactory(
-        retrieve=QuizSerializer,
-        list=QuizSerializer,
         create=InputSerializer,
-        default=QuizSerializer,
-        update=QuizSerializer,
+        default=QuizSerializer
     )
-
-    def get_queryset(self):
-        if self.action == "list":
-            return Quiz.objects.prefetch_related("questions", "questions__answers")
-        return Quiz.objects.none()
+    queryset = Quiz.objects.prefetch_related(
+                "questions",
+                "questions__answers"
+    ).all()
 
     def get_permissions(self):
         for_users = ["create", "list"]
@@ -53,32 +50,43 @@ class QuizViewSet(ModelViewSet):
             data = quiz_generator.generate_quiz(creator_input)
 
         if data != {}:
-            serializer = QuizSerializer(data=data, context={"request": request})
+            serializer = QuizSerializer(
+                data=data,
+                context={"request": request}
+            )
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
             return Response(
-                serializer.data, status=status.HTTP_201_CREATED, headers=headers
+                serializer.data,
+                status=status.HTTP_201_CREATED,
+                headers=headers
             )
-        return Response({}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
 class CheckAnswersView(CreateModelMixin, GenericViewSet):
-    queryset = Quiz.objects.select_related("creator")
+    queryset = Quiz.objects.select_related('creator')
     serializer_class = UserAnswerSerializer
 
     def create(self, request, *args, **kwargs):
-        front_request = request.data.get("_user_answers", [])
+        front_request = request.data.get('_user_answers', [])
         user = request.data.get("guest")
         front_request = json.loads(front_request)
         quiz_generator = QuizGenerator()
         data = []
+
+        quiz_creator = Question.objects.filter(
+            id=int(front_request[0]["question_id"])
+        ).first().quiz.creator
+
         for answer in front_request:
-            question = (
-                Question.objects.select_related("quiz")
-                .filter(id=int(answer["question_id"]))
-                .first()
-            )
+            question = (Question.objects.select_related('quiz')
+                        .filter(id=int(answer["question_id"]))
+                        .first())
             item = {
                 "answer": answer["answer"],
                 "question": question.question,
@@ -89,16 +97,25 @@ class CheckAnswersView(CreateModelMixin, GenericViewSet):
         results = quiz_generator.check_answers(str(data))
 
         if request.user.is_authenticated:
-            answers = [UserAnswer(**item, user=request.user) for item in results]
+            answers = [
+                UserAnswer(**item, user=request.user) for item in results
+            ]
             UserAnswer.objects.bulk_create(answers)
             return Response(results, status=status.HTTP_201_CREATED)
         else:
             if user:
                 request.session["guest_user_name"] = user
-            guest_name = request.session.get("guest_user_name")
-            answers = [UserAnswer(**item, guest=guest_name) for item in results]
+            guest_name = request.session.get('guest_user_name')
+            answers = [
+                UserAnswer(**item, guest=guest_name) for item in results
+            ]
             UserAnswer.objects.bulk_create(answers)
-            return Response(results, status=status.HTTP_201_CREATED)
+        EmailSender(
+            "Somebody took the quiz!",
+            f"{user} took the quiz. Visit the website for more information",
+            [quiz_creator.email]
+        ).send_email()
+        return Response(results, status=status.HTTP_201_CREATED)
 
 
 class QuizAnalysisViewSet(RetrieveModelMixin,ListModelMixin,GenericViewSet):

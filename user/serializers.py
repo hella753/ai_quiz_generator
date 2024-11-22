@@ -1,9 +1,8 @@
 import re
-
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.serializers import ModelSerializer
-from quiz_app.models import Answer, Question, Quiz
+from quiz_app.models import Answer, Question, Quiz, UserAnswer
 from quiz_app.serializers import AnswerSerializer
 from user.models import User
 from exceptions import DanyTornikeException
@@ -28,13 +27,13 @@ class RegistrationSerializer(ModelSerializer):
         normalized_username = re.sub(r'[^a-zA-Z]', '', username).lower()
         if normalized_username == "tornike":
             raise DanyTornikeException()
-        return data
+        return super().validate(data)
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Answer
-        exclude = ["question", "created_at", "updated_at"]
+        model = UserAnswer
+        exclude = ["question", "created_at", "updated_at", "user", "guest"]
 
 
 class UserQuestionSerializer(serializers.ModelSerializer):
@@ -51,4 +50,4 @@ class UserQuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        exclude = ["creator", "created_at", "updated_at"]
+        exclude = ["created_at", "updated_at"]

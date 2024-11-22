@@ -7,3 +7,9 @@ class IsCreater(permissions.BasePermission):
         if request.method in permissions.SAFE_METHODS:
             return True
         return obj.creator == request.user
+
+
+class IsThisUser(permissions.BasePermission):
+    def has_object_permission(self, request, view, obj):
+        if request.user == obj:
+            return True

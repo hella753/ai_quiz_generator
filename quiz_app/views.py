@@ -49,7 +49,10 @@ class QuizViewSet(ModelViewSet):
             data = quiz_generator.generate_quiz(creator_input)
 
         if data != {}:
-            serializer = QuizSerializer(data=data, context={"request": request})
+            serializer = QuizSerializer(
+                data=data,
+                context={"request": request}
+            )
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)

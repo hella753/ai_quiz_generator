@@ -95,6 +95,8 @@ class CheckAnswersView(CreateModelMixin, GenericViewSet):
             data.append(item)
 
         results = quiz_generator.check_answers(str(data))
+        if not isinstance(results, list):
+            results = [results]
 
         if request.user.is_authenticated:
             answers = [

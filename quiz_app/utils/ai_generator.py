@@ -1,7 +1,6 @@
 import json
 from decouple import config
 from openai import OpenAI
-from django.utils.translation import gettext_lazy as _
 
 
 class QuizGenerator:
@@ -24,7 +23,7 @@ class QuizGenerator:
         return data
 
     def generate_quiz(self, prompt, file=""):
-        sys_prompt = _("return JSON object. structure: 'name', 'questions' "
+        sys_prompt = ("return JSON object. structure: 'name', 'questions' "
                       "should have nested 'question', 'score': 1.00 "
                       "and 'answers' list. If quiz is multiple choice: "
                       "'answers' should have 'answer', 'correct': bool "
@@ -38,7 +37,7 @@ class QuizGenerator:
         return data
 
     def check_answers(self, prompt):
-        sys_prompt = _("You are an AI assistant that helps with checking quiz answers. "
+        sys_prompt = ("You are an AI assistant that helps with checking quiz answers. "
                       "You'll be given questions, answers, and question_ids. DO NOT TOUCH THE QUESTION_ID! "
                       "Return the response in JSON format with fields: question_id, answer, explanation(short, only one sentence, max 2), "
                       "and correct.(True or False)"

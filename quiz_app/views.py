@@ -4,13 +4,12 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from quiz_app.permissions import IsCreater
 from quiz_app.utils.file_processor import FileProcessor
-from quiz_app.models import Quiz, Question, Answer
+from quiz_app.models import Quiz, Question, Answer, UserAnswer
 from quiz_app.utils.ai_generator import QuizGenerator
 from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import QuizSerializer, InputSerializer, UserAnswerSerializer
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin
 import json
-
 
 
 class QuizViewSet(ModelViewSet):
@@ -93,16 +92,16 @@ class CheckAnswersView(CreateModelMixin, GenericViewSet):
 
         if request.user.is_authenticated:
             answers = [
-                Answer(**item, user=request.user) for item in results
+                UserAnswer(**item, user=request.user) for item in results
             ]
-            Answer.objects.bulk_create(answers)
+            UserAnswer.objects.bulk_create(answers)
             return Response(results, status=status.HTTP_201_CREATED)
         else:
             if user:
                 request.session["guest_user_name"] = user
             guest_name = request.session.get('guest_user_name')
             answers = [
-                Answer(**item, guest=guest_name) for item in results
+                UserAnswer(**item, guest=guest_name) for item in results
             ]
-            Answer.objects.bulk_create(answers)
+            UserAnswer.objects.bulk_create(answers)
             return Response(results, status=status.HTTP_201_CREATED)

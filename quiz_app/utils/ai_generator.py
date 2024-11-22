@@ -18,7 +18,7 @@ class QuizGenerator:
             temperature=0.8
         )
         response = completion.choices[0].message.content
-        print(response)
+        # print(response)
         data = json.loads(response)
         return data
 

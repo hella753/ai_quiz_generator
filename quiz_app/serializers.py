@@ -1,13 +1,13 @@
 from rest_framework import serializers
 from quiz_app.models import Quiz, Question, Answer
+from quiz_app.utils.update_quiz import QuizUpdater
 
 
 class AnswerSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
-
     class Meta:
         model = Answer
-        exclude = ["question"]
+        exclude = ["question", "created_at", "updated_at"]
 
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -16,12 +16,7 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        exclude = ["quiz"]
-
-
-class UserAnswerSerializer(serializers.Serializer):
-    _user_answers = serializers.CharField(max_length=10000)
-    guest = serializers.CharField(max_length=30, required=False)
+        exclude = ["quiz", "created_at", "updated_at"]
 
 
 class QuizSerializer(serializers.ModelSerializer):
@@ -29,7 +24,7 @@ class QuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        exclude = ["creator"]
+        exclude = ["creator", "created_at", "updated_at"]
 
     def create(self, validated_data):
         questions = validated_data.pop("questions")
@@ -47,48 +42,16 @@ class QuizSerializer(serializers.ModelSerializer):
         return quiz
 
     def update(self, instance, validated_data):
-        questions = validated_data.pop("questions")
-        instance.name = validated_data.get("name")
-        instance.save()
-
-        existing_questions = [question.id for question in instance.questions.all()]
-        new_questions = [question.get('id') for question in questions]
-
-        for question_id in existing_questions:
-            if question_id not in new_questions:
-                instance.questions.filter(id=question_id).delete()
-
-        for question in questions:
-            question_id = question.get("id")
-            answers = question.pop("answers")
-
-            if question_id in existing_questions:
-                quest = instance.questions.get(id=question_id)
-                quest.question = question["question"]
-                quest.score = question["score"]
-                quest.save()
-            else:
-                quest = Question.objects.create(quiz=instance, **question)
-
-            existing_answers = [answer.id for answer in quest.answers.all()]
-            new_answers = [answer.get('id') for answer in answers]
-
-            for answer_id in existing_answers:
-                if answer_id not in new_answers:
-                    quest.answers.filter(id=answer_id).delete()
-
-            for answer in answers:
-                answer_id = answer.get("id")
-                if answer_id in existing_answers:
-                    ans = quest.answers.get(id=answer_id)
-                    ans.answer = answer["answer"]
-                    ans.correct = answer["correct"]
-                    ans.save()
-                else:
-                    Answer.objects.create(question=quest, **answer)
-        return instance
+        quiz_updater = QuizUpdater(instance, validated_data)
+        updated_instance = quiz_updater.handle_questions()
+        return updated_instance
 
 
 class InputSerializer(serializers.Serializer):
     _input = serializers.CharField(max_length=150)
     file = serializers.FileField(required=False)
+
+
+class UserAnswerSerializer(serializers.Serializer):
+    _user_answers = serializers.CharField(max_length=10000)
+    guest = serializers.CharField(max_length=30, required=False)

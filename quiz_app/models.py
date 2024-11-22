@@ -1,10 +1,19 @@
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from user.models import User
 import uuid
 
 
-class Quiz(models.Model):
+class ModifiedTimeModel(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Quiz(ModifiedTimeModel):
     id = models.UUIDField(
         primary_key=True,
         default=uuid.uuid4,
@@ -22,7 +31,7 @@ class Quiz(models.Model):
         return f"{self.name}"
 
 
-class Question(models.Model):
+class Question(ModifiedTimeModel):
     question = models.TextField(verbose_name=_("Question"))
     score = models.DecimalField(
         decimal_places=2,
@@ -41,7 +50,7 @@ class Question(models.Model):
         return f"{self.question}"
 
 
-class Answer(models.Model):
+class Answer(ModifiedTimeModel):
     answer = models.TextField(verbose_name=_("Answer"))
     correct = models.BooleanField(default=False, verbose_name=_("Correct"))
     question = models.ForeignKey(
@@ -50,15 +59,33 @@ class Answer(models.Model):
         related_name="answers",
         verbose_name=_("Question")
     )
+
+    def __str__(self):
+        return f"{self.answer}"
+
+
+class UserAnswer(ModifiedTimeModel):
+    answer = models.TextField(verbose_name=_("Answer"))
+    correct = models.BooleanField(default=False, verbose_name=_("Correct"))
+    question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        related_name="your_answers",
+        verbose_name=_("Question")
+    )
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         null=True,
         blank=True,
+        related_name="user_answers",
         verbose_name=_("User")
     )
-    guest = models.CharField(max_length=25, null=True, blank=True, verbose_name=_("Guest"))
+    guest = models.CharField(max_length=25, null=True, blank=True)
     explanation = models.TextField(null=True, blank=True, verbose_name=_("Explanation"))
 
     def __str__(self):
         return f"{self.answer}"
+
+
+

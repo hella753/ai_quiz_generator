@@ -17,3 +17,10 @@ class RegistrationSerializer(ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+    def validate(self, data):
+        username = data.get("username")
+        normalized_username = re.sub(r'[^a-zA-Z]', '', username).lower()
+        if normalized_username == "tornike":
+            raise PermissionDenied
+

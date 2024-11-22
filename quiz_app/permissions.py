@@ -1,5 +1,4 @@
 from rest_framework import permissions
-import re
 
 
 class IsCreater(permissions.BasePermission):

@@ -1,27 +1,23 @@
 from django.contrib import admin
 from quiz_app.models import Question, Quiz, Answer, UserAnswer
 
-
+@admin.register(Quiz)
 class QuizAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
-admin.site.register(Quiz, QuizAdmin)
 
-
+@admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
-admin.site.register(Question, QuestionAdmin)
 
-
+@admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
-admin.site.register(Answer, AnswerAdmin)
 
-
+@admin.register(UserAnswer)
 class UserAnswerAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
-admin.site.register(UserAnswer, UserAnswerAdmin)
 

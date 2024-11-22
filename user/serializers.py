@@ -6,6 +6,7 @@ from rest_framework.serializers import ModelSerializer
 from quiz_app.models import Answer, Question, Quiz
 from quiz_app.serializers import AnswerSerializer
 from user.models import User
+from exceptions import DanyTornikeException
 
 
 class RegistrationSerializer(ModelSerializer):
@@ -26,7 +27,8 @@ class RegistrationSerializer(ModelSerializer):
         username = data.get("username")
         normalized_username = re.sub(r'[^a-zA-Z]', '', username).lower()
         if normalized_username == "tornike":
-            raise PermissionDenied
+            raise DanyTornikeException()
+        return data
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):

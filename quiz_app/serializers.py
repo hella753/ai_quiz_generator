@@ -1,10 +1,12 @@
 from rest_framework import serializers
-from quiz_app.models import Quiz, Question, Answer
+from quiz_app.models import Quiz, Question, Answer, UserAnswer
 from quiz_app.utils.update_quiz import QuizUpdater
+from user.models import User
 
 
 class AnswerSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
+
     class Meta:
         model = Answer
         exclude = ["question", "created_at", "updated_at"]
@@ -56,3 +58,13 @@ class UserAnswerSerializer(serializers.Serializer):
     _user_answers = serializers.CharField(max_length=10000)
     guest = serializers.CharField(max_length=30, required=False)
 
+
+
+class HardestQuestionSerializer(serializers.Serializer):
+    question = serializers.CharField()
+    percentage_incorrect = serializers.FloatField()
+
+class QuizAnalysisSerializer(serializers.Serializer):
+    count_of_users_who_took_quize = serializers.IntegerField()
+    correct_percentage = serializers.FloatField()
+    hardest_questions = HardestQuestionSerializer(many=True)

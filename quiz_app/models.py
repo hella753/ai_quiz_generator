@@ -3,6 +3,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from user.models import User
 import uuid
+from .managers import UserAnswerManager
 
 
 class ModifiedTimeModel(models.Model):
@@ -47,6 +48,8 @@ class UserAnswer(ModifiedTimeModel):
     user = models.ForeignKey(User,on_delete=models.CASCADE,null=True,blank=True,related_name="user_answers",verbose_name=_("User"))
     guest = models.CharField(max_length=25, null=True, blank=True)
     explanation = models.TextField(null=True, blank=True, verbose_name=_("Explanation"))
+
+    objects = UserAnswerManager()
 
     def __str__(self):
         return f"{self.answer}"

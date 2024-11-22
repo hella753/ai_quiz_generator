@@ -4,6 +4,7 @@ from quiz_app.models import Quiz, Question, Answer
 
 class AnswerSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
+
     class Meta:
         model = Answer
         exclude = ["question"]
@@ -17,6 +18,10 @@ class QuestionSerializer(serializers.ModelSerializer):
         model = Question
         exclude = ["quiz"]
 
+
+class UserAnswerSerializer(serializers.Serializer):
+    _user_answers = serializers.CharField(max_length=10000)
+    guest = serializers.CharField(max_length=30, required=False)
 
 class QuizSerializer(serializers.ModelSerializer):
     questions = QuestionSerializer(many=True)

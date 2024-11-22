@@ -9,7 +9,6 @@ class IsCreater(permissions.BasePermission):
             return True
         return obj.creator == request.user
 
-
 class DenyAllForTornike(permissions.BasePermission):
    
     def normalize_username(self, username):

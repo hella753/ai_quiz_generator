@@ -39,8 +39,9 @@ class QuizGenerator:
     def check_answers(self, prompt):
         sys_prompt = ("You are an AI assistant that helps with checking quiz answers. "
                       "You'll be given questions, answers, and question_ids. DO NOT TOUCH THE QUESTION_ID! "
-                      "Return the response in JSON format with fields: question_id, answer, explanation(short, only one sentence, max 2), "
-                      "and correct.(True or False)"
+                      "Return the response in JSON format with fields: question_id, answer, explanation(short, only one sentence, max 2."
+                      "If the answer is correct, leave the explanation field empty.), "
+                      "and correct(True or False)."
                       "Dont Write anything rather then just object. not even json "
                       "in the beginning."
                       )

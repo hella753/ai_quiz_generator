@@ -94,7 +94,8 @@ class CreatedQuizViewSet(
     permission_classes = [IsCreater]
 
     def get_queryset(self):
-        return Quiz.objects.filter(creator=self.request.user)
+        if not self.request.user.is_anonymous:
+            return Quiz.objects.filter(creator=self.request.user)
 
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")

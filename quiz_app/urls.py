@@ -8,7 +8,6 @@ router = DefaultRouter()
 
 router.register(r"quiz", QuizViewSet, basename="quiz")
 router.register("check-answers", CheckAnswersViewSet, basename="check-answers")
-# router.register(r'quiz-analysis', QuizAnalysisViewSet,basename="quiz-analysis")
 
 
 urlpatterns = [

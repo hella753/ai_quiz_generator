@@ -15,7 +15,7 @@ from .serializers import UserQuizSerializer
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.email_sender import EmailSender
 from user.models import User
-from user.serializers import RegistrationSerializer,QuizeDeatilSerializer,QuizSerializer
+from user.serializers import RegistrationSerializer,CreatedQuizeDeatilSerializer,QuizForCreatorSerializer
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 
@@ -81,12 +81,12 @@ class CreatedQuizViewSet(
 ):
    
     serializer_class = SerializerFactory(
-        default=QuizSerializer,
-        retrieve=QuizeDeatilSerializer,
-        list=QuizSerializer
+        default=QuizForCreatorSerializer,
+        retrieve=CreatedQuizeDeatilSerializer,
+        list=QuizForCreatorSerializer
     )
     permission_classes = [IsCreater]
-    queryset = Quiz.objects.all()
+    # queryset = Quiz.objects.all()
 
     def get_queryset(self):
         return Quiz.objects.filter(creator=self.request.user)

@@ -53,12 +53,12 @@ class UserQuizSerializer(serializers.ModelSerializer):
         model = Quiz
         exclude = ["created_at", "updated_at"]
 
-class QuizSerializer(serializers.ModelSerializer):
+class QuizForCreatorSerializer(serializers.ModelSerializer):
      class Meta:
         model = Quiz
         exclude = ["created_at", "updated_at"]
 
-class QuizeDeatilSerializer(serializers.Serializer):
+class CreatedQuizeDeatilSerializer(serializers.Serializer):
     id = serializers.CharField()
     name = serializers.CharField()
     creator = serializers.CharField()

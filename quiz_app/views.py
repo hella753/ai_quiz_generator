@@ -10,9 +10,9 @@ from quiz_app.utils.ai_generator import QuizGenerator
 from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import (
     QuizSerializer,
-    InputSerializer, AnswerCheckerSerializer, UserAnswerCheckerSerializer,
+    InputSerializer, AnswerCheckerSerializer, UserAnswerCheckerSerializer
 )
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,ListModelMixin
 import json
 
 
@@ -110,15 +110,26 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
         return Response(results, status=status.HTTP_201_CREATED)
 
 
-# class QuizAnalysisViewSet(RetrieveModelMixin, GenericViewSet):
+# class QuizAnalysisViewSet(ListModelMixin,RetrieveModelMixin, GenericViewSet):
 #     queryset = Quiz.objects.all()
-#     serializer_class = QuizSerializer
-#     permission_classes = [CanSeeAnalysis]
+#     serializer_class = SerializerFactory(
+#         default=QuizSerializer,
+#         retrieve=QuizAnalysisSerializer
+#     )
+
+#     def get_queryset(self):
+#         return Quiz.objects.filter(creator=self.request.user)
+    
+    
+#     def list(self, request, *args, **kwargs):
+#         print(self.request.user)
+#         return super().list(request, *args, **kwargs)
 
 #     def retrieve(self, request, *args, **kwargs):
 #         quiz = self.get_object()
-#         self.check_object_permissions(request, quiz)
-#         self.check_permissions(request)
+#         print(f"Retrieved quiz: {quiz}")
+#         print(self.request.user)
+
 #         count_of_users_who_took_quiz = UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
 #         correct_percentage = UserAnswer.objects.get_correct_percentage(quiz.id)
 #         hardest_questions = UserAnswer.objects.get_hardest_questions(quiz.id)

@@ -6,6 +6,7 @@ from quiz_app.permissions import IsCreater
 from quiz_app.utils.email_sender import EmailSender
 from quiz_app.utils.file_processor import FileProcessor
 from quiz_app.utils.ai_generator import QuizGenerator
+from quiz_app.utils.paginators import CustomPaginator
 from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import *
 from rest_framework.mixins import CreateModelMixin
@@ -17,6 +18,7 @@ class QuizViewSet(ModelViewSet):
         create=InputSerializer,
         default=QuizSerializer
     )
+    pagination_class = CustomPaginator
     queryset = Quiz.objects.prefetch_related(
                 "questions",
                 "questions__answers"

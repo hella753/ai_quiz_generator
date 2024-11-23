@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.decorators import action
 from quiz_app.models import Quiz
 from quiz_app.permissions import IsThisUser, IsCreater
+from quiz_app.utils.paginators import CustomPaginator
 from .serializers import UserQuizSerializer
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.email_sender import EmailSender
@@ -25,6 +26,7 @@ class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
     This ViewSet is responsible for creating a new user.
     """
     serializer_class = RegistrationSerializer
+    pagination_class = CustomPaginator
     queryset = User.objects.all()
 
     def get_permissions(self):
@@ -99,6 +101,7 @@ class CreatedQuizViewSet(
         retrieve=CreatedQuizeDeatilSerializer,
         list=QuizForCreatorSerializer,
     )
+    pagination_class = CustomPaginator
     permission_classes = [IsCreater]
 
     def get_queryset(self):

@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import serializers
 from quiz_app.models import Quiz, Question, Answer, UserAnswer
 from quiz_app.utils.update_quiz import QuizUpdater
@@ -54,10 +55,38 @@ class InputSerializer(serializers.Serializer):
     file = serializers.FileField(required=False)
 
 
-class UserAnswerSerializer(serializers.Serializer):
+class AnswerCheckerSerializer(serializers.Serializer):
     _user_answers = serializers.CharField(max_length=10000)
     guest = serializers.CharField(max_length=30, required=False)
 
+
+class UserAnswerCheckerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserAnswer
+        fields = "__all__"
+
+    def create(self, validated_data):
+        results = validated_data
+        if not isinstance(results, list):
+            results = [results]
+        request = self.context.get("request")
+        user = request.user
+        guest = self.context.get('guest')
+        if user.is_authenticated:
+            answers = [
+                UserAnswer(**item, user=user) for item in results
+            ]
+            with transaction.atomic():
+                UserAnswer.objects.bulk_create(answers)
+        else:
+            if guest:
+                request.session["guest_user_name"] = guest
+            guest_name =  request.session.get("guest_user_name")
+            answers = [
+                UserAnswer(**item, guest=guest_name) for item in results
+            ]
+            with transaction.atomic():
+                UserAnswer.objects.bulk_create(answers)
 
 
 class HardestQuestionSerializer(serializers.Serializer):

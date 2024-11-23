@@ -22,7 +22,7 @@ class QuizGenerator:
         data = json.loads(response)
         return data
 
-    def generate_quiz(self, prompt, file=""):
+    def generate_quiz(self, prompt, file=None):
         sys_prompt = ("return JSON object. structure: 'name', 'questions' "
                       "should have nested 'question', 'score': 1.00 "
                       "and 'answers' list. If quiz is multiple choice: "
@@ -31,7 +31,7 @@ class QuizGenerator:
                       "Dont Write anything rather then just object. not even json "
                       "in the beginning. If user says that he needs more than 10 "
                       "questions dont generate anything.")
-        if file != "":
+        if file is not None:
             sys_prompt += f"Use this text for generating questions {file}"
         data = self.use_ai(sys_prompt, prompt)
         return data

@@ -11,8 +11,7 @@ from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import (
     QuizSerializer,
     InputSerializer,
-    UserAnswerSerializer,
-    QuizAnalysisSerializer,
+    QuizAnalysisSerializer, AnswerCheckerSerializer, UserAnswerCheckerSerializer,
 )
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,ListModelMixin
 import json
@@ -68,22 +67,19 @@ class QuizViewSet(ModelViewSet):
         )
 
 
-class CheckAnswersView(CreateModelMixin, GenericViewSet):
+class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
     queryset = Quiz.objects.select_related('creator')
-    serializer_class = UserAnswerSerializer
+    serializer_class = AnswerCheckerSerializer
 
     def create(self, request, *args, **kwargs):
-        front_request = request.data.get('_user_answers', [])
-        user = request.data.get("guest")
-        front_request = json.loads(front_request)
-        quiz_generator = QuizGenerator()
+        answer_data = request.data.get('_user_answers', [])
+        guest = request.data.get("guest")
+        answer_data = json.loads(answer_data)
         data = []
-
         quiz_creator = Question.objects.filter(
-            id=int(front_request[0]["question_id"])
+            id=int(answer_data[0]["question_id"])
         ).first().quiz.creator
-
-        for answer in front_request:
+        for answer in answer_data:
             question = (Question.objects.select_related('quiz')
                         .filter(id=int(answer["question_id"]))
                         .first())
@@ -93,25 +89,21 @@ class CheckAnswersView(CreateModelMixin, GenericViewSet):
                 "question_id": question.id,
             }
             data.append(item)
-
-        results = quiz_generator.check_answers(str(data))
-        if not isinstance(results, list):
-            results = [results]
-
-        if request.user.is_authenticated:
-            answers = [
-                UserAnswer(**item, user=request.user) for item in results
-            ]
-            UserAnswer.objects.bulk_create(answers)
-            return Response(results, status=status.HTTP_201_CREATED)
+        results = QuizGenerator().check_answers(str(data))
+        results = [
+            {**item, "question": item.pop("question_id")} for item in results
+        ]
+        serializer = UserAnswerCheckerSerializer(
+            data=results,
+            many=True,
+            context={"request": request, "guest": guest}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        if guest:
+            user = guest
         else:
-            if user:
-                request.session["guest_user_name"] = user
-            guest_name = request.session.get('guest_user_name')
-            answers = [
-                UserAnswer(**item, guest=guest_name) for item in results
-            ]
-            UserAnswer.objects.bulk_create(answers)
+            user = request.user.username
         EmailSender(
             "Somebody took the quiz!",
             f"{user} took the quiz. Visit the website for more information",

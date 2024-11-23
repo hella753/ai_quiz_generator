@@ -1,32 +1,29 @@
 from django.contrib.auth import login
-from rest_framework.mixins import (
-    CreateModelMixin,
-    ListModelMixin,
-    RetrieveModelMixin,
-    UpdateModelMixin,
-    DestroyModelMixin,
-)
+from django.shortcuts import get_object_or_404
+from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet, ModelViewSet
+from rest_framework.viewsets import GenericViewSet
+from rest_framework import status
+from rest_framework.decorators import action
 from quiz_app.models import Quiz
 from quiz_app.permissions import IsThisUser, IsCreater
 from .serializers import UserQuizSerializer
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.email_sender import EmailSender
-from user.models import User
-from user.serializers import (
+from .models import User
+from .serializers import (
     RegistrationSerializer,
     CreatedQuizeDeatilSerializer,
     QuizForCreatorSerializer,
 )
-from rest_framework import status
-from django.shortcuts import get_object_or_404
-from rest_framework.decorators import action
 from quiz_app.models import UserAnswer
 
 
 class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
+    """
+    This ViewSet is responsible for creating a new user.
+    """
     serializer_class = RegistrationSerializer
     queryset = User.objects.all()
 
@@ -47,7 +44,9 @@ class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
         )
 
         EmailSender(
-            f"Welcome To AI Quiz Generator {user.username}", message, [user.email]
+            f"Welcome To AI Quiz Generator {user.username}",
+            message,
+            [user.email]
         ).send_email()
 
         if user:
@@ -57,35 +56,44 @@ class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
 
 
 class TakenQuizViewSet(GenericViewSet, RetrieveModelMixin):
+    """
+    This ViewSet is responsible for getting the quizzes taken by the user.
+    """
     serializer_class = UserQuizSerializer
     permission_classes = [IsThisUser]
     queryset = User.objects.all()
-    # works on accounts/taken-quiz/username
     lookup_field = "questions__your_answers__user__username"
 
     def retrieve(self, request, *args, **kwargs):
-        user_object = User.objects.filter(username=kwargs[self.lookup_field]).first()
-
+        user_object = User.objects.filter(
+            username=kwargs[self.lookup_field]
+        ).first()
         self.check_object_permissions(self.request, user_object)
-
         qs = (
             Quiz.objects.select_related("creator")
             .prefetch_related("questions__your_answers", "questions__answers")
             .filter(questions__your_answers__user=request.user)
             .distinct()
         )
-        serializer = UserQuizSerializer(qs, many=True, context={"request": request})
+        serializer = UserQuizSerializer(
+            qs,
+            many=True,
+            context={"request": request}
+        )
         return Response(serializer.data)
 
 
 class CreatedQuizViewSet(
-    RetrieveModelMixin,
-    UpdateModelMixin,
-    DestroyModelMixin,
-    ListModelMixin,
-    GenericViewSet,
+        RetrieveModelMixin,
+        UpdateModelMixin,
+        DestroyModelMixin,
+        ListModelMixin,
+        GenericViewSet
 ):
-
+    """
+    This ViewSet is responsible for getting, updating, deleting,
+    and listing the quizzes created by the user.
+    """
     serializer_class = SerializerFactory(
         default=QuizForCreatorSerializer,
         retrieve=CreatedQuizeDeatilSerializer,
@@ -99,7 +107,10 @@ class CreatedQuizViewSet(
 
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
-        quiz = get_object_or_404(Quiz.objects.prefetch_related("questions"), pk=pk)
+        quiz = get_object_or_404(
+            Quiz.objects.prefetch_related("questions"),
+            pk=pk
+        )
         total_score = quiz.get_total_score()
         users_count = Quiz.objects.get_count_of_who_took_this_quiz(quiz)
         users = Quiz.objects.get_users_who_took_this_quiz(quiz)
@@ -125,11 +136,20 @@ class CreatedQuizViewSet(
         permission_classes=[IsCreater],
     )
     def analytics(self, request, pk=None):
+        """
+        This method is responsible for getting the analytics of the quiz.
+        """
         quiz = get_object_or_404(Quiz, pk=pk, creator=request.user)
 
-        total_users = UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
-        correct_percentage = UserAnswer.objects.get_correct_percentage(quiz.id)
-        hardest_questions = UserAnswer.objects.get_hardest_questions(quiz.id)
+        total_users = (
+            UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
+        )
+        correct_percentage = (
+            UserAnswer.objects.get_correct_percentage(quiz.id)
+        )
+        hardest_questions = (
+            UserAnswer.objects.get_hardest_questions(quiz.id)
+        )
 
         analytics_data = {
             "total_users": total_users,

@@ -3,6 +3,9 @@ from docx2txt import docx2txt
 
 
 class FileProcessor:
+    """
+    Class to process files and extract text from them
+    """
     def __init__(self, file):
         self.file = file
 
@@ -14,10 +17,18 @@ class FileProcessor:
         return text
 
     def process_docx(self):
+        """
+        Process docx files
+        :return: text extracted from docx files
+        """
         text = docx2txt.process(self.file)
         return text
 
     def process_pdfs(self):
+        """
+        Process pdf files
+        :return: text extracted from pdf files
+        """
         text = ""
         reader = PdfReader(self.file)
         for page in reader.pages:

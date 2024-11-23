@@ -11,7 +11,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     username = models.CharField(
         max_length=20,
         unique=True,
-        help_text="Required. 20 characted or fewer.",
+        help_text="Required. 20 character or fewer.",
         error_messages={
             "unique": "A user with that username already exists."
         },

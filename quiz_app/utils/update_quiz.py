@@ -1,7 +1,10 @@
-from quiz_app.models import Question, Answer
+from quiz_app.models import Question, Answer, Quiz
 
 
 class QuizUpdater:
+    """
+    This class is responsible for updating the quiz instance.
+    """
     def __init__(self, instance, validated_data):
         self.instance = instance
         self.validated_data = validated_data
@@ -12,7 +15,9 @@ class QuizUpdater:
         self.instance.save()
 
     def handle_questions(self):
-        existing_questions = [question.id for question in self.instance.questions.all()]
+        existing_questions = [
+            question.id for question in self.instance.questions.all()
+        ]
         new_questions = [question.get('id') for question in self.questions]
         for question_id in existing_questions:
             if question_id not in new_questions:

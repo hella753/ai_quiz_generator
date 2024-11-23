@@ -7,6 +7,10 @@ from django.db.models import Sum
 
 
 class ModifiedTimeModel(models.Model):
+    """
+    An abstract base class model that provides
+    created_at and updated_at fields.
+    """
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -40,7 +44,10 @@ class Question(ModifiedTimeModel):
         decimal_places=2, max_digits=5, default=1, verbose_name=_("Score")
     )
     quiz = models.ForeignKey(
-        Quiz, on_delete=models.CASCADE, related_name="questions", verbose_name=_("Quiz")
+        Quiz,
+        on_delete=models.CASCADE,
+        related_name="questions",
+        verbose_name=_("Quiz")
     )
 
     def __str__(self):
@@ -79,7 +86,11 @@ class UserAnswer(ModifiedTimeModel):
         verbose_name=_("User"),
     )
     guest = models.CharField(max_length=25, null=True, blank=True)
-    explanation = models.TextField(null=True, blank=True, verbose_name=_("Explanation"))
+    explanation = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("Explanation")
+    )
 
     objects = UserAnswerManager()
 

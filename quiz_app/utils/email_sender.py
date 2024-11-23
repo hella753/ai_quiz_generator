@@ -3,6 +3,9 @@ from django.core.mail import EmailMessage
 
 
 class EmailSender:
+    """
+    This class is used to send email to the user
+    """
     def __init__(self, subject, message, to):
         self.message = message
         self.to = to

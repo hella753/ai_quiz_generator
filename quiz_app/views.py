@@ -2,14 +2,13 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from quiz_app.permissions import IsCreater, CanSeeAnalysis
+from quiz_app.permissions import IsCreater
 from quiz_app.utils.email_sender import EmailSender
 from quiz_app.utils.file_processor import FileProcessor
-from quiz_app.models import Quiz, Question, UserAnswer
 from quiz_app.utils.ai_generator import QuizGenerator
 from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import *
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,ListModelMixin
+from rest_framework.mixins import CreateModelMixin
 import json
 
 
@@ -105,5 +104,3 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
             [quiz_creator.email]
         ).send_email()
         return Response(results, status=status.HTTP_201_CREATED)
-
-

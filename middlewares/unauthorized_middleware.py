@@ -4,7 +4,8 @@ import uuid
 
 class AnonymousUserMiddleware(MiddlewareMixin):
     """
-    Processes the request. sets the name of the guest users
+    Processes the request. sets the name of the guest user
+    if the user is anonymous.
     """
     def process_request(self, request):
         user = request.user

@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from user.views import CreatedQuizViewSet, CreateUserViewSet, TakenQuizViewSet
 
+
 app_name="user"
 router = DefaultRouter()
 router.register(r'create-user', CreateUserViewSet, basename='create-user')

@@ -2,10 +2,18 @@ from django.db import models
 from django.db.models import Count, F
 from django.db.models import Case, When
 
+
 class UserAnswerManager(models.Manager):
-    
+    """
+    Custom manager for UserAnswer model
+    """
     def get_count_of_users_who_took_quiz(self, quiz_id):
-        return self.filter(question__quiz__id=quiz_id).values('user').distinct().count()
+        return (
+            self.filter(question__quiz__id=quiz_id)
+            .values('user')
+            .distinct()
+            .count()
+        )
 
     def get_correct_percentage(self, quiz_id):
         total_users = self.get_count_of_users_who_took_quiz(quiz_id)
@@ -21,9 +29,15 @@ class UserAnswerManager(models.Manager):
         questions = self.filter(question__quiz__id=quiz_id) \
                         .values('question__question') \
                         .annotate(
-                            incorrect_count=Count(Case(When(correct=False, then=1))),
+                            incorrect_count=Count(
+                                Case(When(correct=False, then=1))
+                            ),
                             total_answers=Count('id'),
-                            incorrect_percentage=F('incorrect_count') * 100.0 / F('total_answers')
+                            incorrect_percentage=F(
+                                'incorrect_count'
+                            ) * 100.0 / F(
+                                'total_answers'
+                            )
                         ) \
                         .order_by('-incorrect_percentage')
 
@@ -34,21 +48,34 @@ class UserAnswerManager(models.Manager):
                 'percentage_incorrect': question['incorrect_percentage']
             })
         return hardest_questions
-    
+
 
 class QuizManager(models.Manager):
+    """
+    Custom manager for Quiz model
+    """
     def get_count_of_who_took_this_quiz(self, quiz):
-        from .models import UserAnswer  
-        return UserAnswer.objects.filter(question__quiz=quiz).values('user', 'guest').distinct().count()
+        from .models import UserAnswer
+        return (
+            UserAnswer.objects.filter(question__quiz=quiz)
+            .values('user', 'guest')
+            .distinct()
+            .count()
+        )
 
     def get_users_who_took_this_quiz(self, quiz):
-        from .models import UserAnswer  
-        user_answers = UserAnswer.objects.filter(question__quiz=quiz).select_related('user')
+        from .models import UserAnswer
+        user_answers = (
+            UserAnswer.objects.filter(question__quiz=quiz)
+            .select_related('user')
+        )
         users = []
         seen_users = set()
 
         for user_answer in user_answers:
-            participant_key = user_answer.user.id if user_answer.user else user_answer.guest
+            participant_key = (
+                user_answer.user.id if user_answer.user else user_answer.guest
+            )
             if participant_key not in seen_users:
                 seen_users.add(participant_key)
                 users_data = {

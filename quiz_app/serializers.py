@@ -89,11 +89,11 @@ class UserAnswerCheckerSerializer(serializers.ModelSerializer):
                 UserAnswer.objects.bulk_create(answers)
 
 
-class HardestQuestionSerializer(serializers.Serializer):
-    question = serializers.CharField()
-    percentage_incorrect = serializers.FloatField()
+# class HardestQuestionSerializer(serializers.Serializer):
+#     question = serializers.CharField()
+#     percentage_incorrect = serializers.FloatField()
 
-class QuizAnalysisSerializer(serializers.Serializer):
-    count_of_users_who_took_quiz = serializers.IntegerField()
-    correct_percentage = serializers.FloatField()
-    hardest_questions = HardestQuestionSerializer(many=True)
+# class QuizAnalysisSerializer(serializers.Serializer):
+#     count_of_users_who_took_quiz = serializers.IntegerField()
+#     correct_percentage = serializers.FloatField()
+#     hardest_questions = HardestQuestionSerializer(many=True)

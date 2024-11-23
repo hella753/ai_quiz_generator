@@ -10,8 +10,7 @@ from quiz_app.utils.ai_generator import QuizGenerator
 from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import (
     QuizSerializer,
-    InputSerializer,
-    QuizAnalysisSerializer, AnswerCheckerSerializer, UserAnswerCheckerSerializer,
+    InputSerializer, AnswerCheckerSerializer, UserAnswerCheckerSerializer,
 )
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin
 import json
@@ -111,25 +110,25 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
         return Response(results, status=status.HTTP_201_CREATED)
 
 
-class QuizAnalysisViewSet(RetrieveModelMixin, GenericViewSet):
-    queryset = Quiz.objects.all()
-    serializer_class = QuizSerializer
-    permission_classes = [CanSeeAnalysis]
+# class QuizAnalysisViewSet(RetrieveModelMixin, GenericViewSet):
+#     queryset = Quiz.objects.all()
+#     serializer_class = QuizSerializer
+#     permission_classes = [CanSeeAnalysis]
 
-    def retrieve(self, request, *args, **kwargs):
-        quiz = self.get_object()
-        self.check_object_permissions(request, quiz)
-        self.check_permissions(request)
-        count_of_users_who_took_quiz = UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
-        correct_percentage = UserAnswer.objects.get_correct_percentage(quiz.id)
-        hardest_questions = UserAnswer.objects.get_hardest_questions(quiz.id)
+#     def retrieve(self, request, *args, **kwargs):
+#         quiz = self.get_object()
+#         self.check_object_permissions(request, quiz)
+#         self.check_permissions(request)
+#         count_of_users_who_took_quiz = UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
+#         correct_percentage = UserAnswer.objects.get_correct_percentage(quiz.id)
+#         hardest_questions = UserAnswer.objects.get_hardest_questions(quiz.id)
 
-        analysis_data = {
-            "count_of_users_who_took_quiz": count_of_users_who_took_quiz,
-            "correct_percentage": correct_percentage,
-            "hardest_questions": hardest_questions,
-        }
+#         analysis_data = {
+#             "count_of_users_who_took_quiz": count_of_users_who_took_quiz,
+#             "correct_percentage": correct_percentage,
+#             "hardest_questions": hardest_questions,
+#         }
 
-        serializer = QuizAnalysisSerializer(analysis_data)
+#         serializer = QuizAnalysisSerializer(analysis_data)
 
-        return Response(serializer.data, status=status.HTTP_200_OK)
+#         return Response(serializer.data, status=status.HTTP_200_OK)

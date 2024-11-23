@@ -15,7 +15,7 @@ from .serializers import UserQuizSerializer
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.email_sender import EmailSender
 from user.models import User
-from user.serializers import RegistrationSerializer,QuizeDeatilSerializer
+from user.serializers import RegistrationSerializer,QuizeDeatilSerializer,QuizSerializer
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 
@@ -78,22 +78,28 @@ class UserViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, RetrieveMode
             return super().perform_create(serializer)
 
 
-class UserQuizViewSet(
+class CreatedQuizViewSet(
     RetrieveModelMixin,
     UpdateModelMixin,
     DestroyModelMixin,
     ListModelMixin,
     GenericViewSet,
 ):
-    """
-    იუზერის შექმნილი ქუიზები
-    """
+   
     serializer_class = SerializerFactory(
-        default=UserQuizSerializer,
-        retrieve=QuizeDeatilSerializer
+        default=QuizSerializer,
+        retrieve=QuizeDeatilSerializer,
+        list=QuizSerializer
     )
     permission_classes = [IsCreater]
     queryset = Quiz.objects.all()
+
+    def get_queryset(self):
+        return Quiz.objects.filter(creator=self.request.user)
+
+    def list(self, request, *args, **kwargs):
+
+        return super().list(request, *args, **kwargs)
 
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")

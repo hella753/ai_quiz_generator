@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'corsheaders',
     'drf_yasg',
     'rest_framework_simplejwt',
     'django_filters',
@@ -53,6 +54,7 @@ AUTH_ANONYMOUS_USER = "user.GuestUser"
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -169,3 +171,6 @@ REST_FRAMEWORK = {
     ),
     'EXCEPTION_HANDLER': 'exceptions.handler.custom_exception_handler',
 }
+
+CORS_ORIGIN_ALLOW_ALL: True
+CORS_ALLOW_CREDENTIALS: True

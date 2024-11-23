@@ -27,12 +27,15 @@ from rest_framework import permissions
 
 schema_view = get_schema_view(
    openapi.Info(
-      title="Snippets API",
+      title="AI Quiz Generator API",
       default_version='v1',
-      description="Test description",
+      description='''Backend API built with Django, for AI Quiz Generator. Provides endpoints to handle Quiz Generating, 
+                    Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to Develop their skills and make studying easier.,''',
       terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="contact@snippets.local"),
-      license=openapi.License(name="BSD License"),
+      contact=openapi.Contact(email="interpredators.django@gmail.com"),
+      license=openapi.License(name='''Copyright (c) 2024 Interpredators /
+                                    Created by: Interpredators /
+                                    Date: November 25, 2024'''),
    ),
    public=True,
    permission_classes=(permissions.AllowAny,),

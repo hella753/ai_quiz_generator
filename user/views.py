@@ -18,10 +18,14 @@ from user.models import User
 from user.serializers import RegistrationSerializer,QuizeDeatilSerializer
 from rest_framework import status
 from django.shortcuts import get_object_or_404
-from quiz_app.models import UserAnswer
 
 
 class UserViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, RetrieveModelMixin):
+    """
+    Listingზე არის რეგისტრაცია და შექმნაზე
+    Createზეც რეგისტრაცია
+    Retrieveზე არის იუზერის გავლილი ქუიზები
+    """
     serializer_class = SerializerFactory(
         create=RegistrationSerializer,
         list=RegistrationSerializer,
@@ -81,6 +85,9 @@ class UserQuizViewSet(
     ListModelMixin,
     GenericViewSet,
 ):
+    """
+    იუზერის შექმნილი ქუიზები
+    """
     serializer_class = SerializerFactory(
         default=UserQuizSerializer,
         retrieve=QuizeDeatilSerializer
@@ -92,8 +99,8 @@ class UserQuizViewSet(
         pk = kwargs.get("pk")
         quiz = get_object_or_404(Quiz.objects.prefetch_related("questions"), pk=pk)
         total_score = quiz.get_total_score()  
-        users_count = Quiz.objects.get_count_Of_who_took_this_quiz(quiz)  
-        users = Quiz.objects.get_users_who_took_This_quiz(quiz)  
+        users_count = Quiz.objects.get_count_of_who_took_this_quiz(quiz)
+        users = Quiz.objects.get_users_who_took_this_quiz(quiz)
 
         data = {
             "id": str(quiz.id),  

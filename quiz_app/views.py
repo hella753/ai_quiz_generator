@@ -1,11 +1,11 @@
-from rest_framework import status, viewsets
+from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from quiz_app.permissions import IsCreater
+from quiz_app.permissions import IsCreater, CanSeeAnalysis
 from quiz_app.utils.email_sender import EmailSender
 from quiz_app.utils.file_processor import FileProcessor
-from quiz_app.models import Quiz, Question, Answer, UserAnswer
+from quiz_app.models import Quiz, Question, UserAnswer
 from quiz_app.utils.ai_generator import QuizGenerator
 from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import (
@@ -13,9 +13,8 @@ from quiz_app.serializers import (
     InputSerializer,
     QuizAnalysisSerializer, AnswerCheckerSerializer, UserAnswerCheckerSerializer,
 )
-from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,ListModelMixin
+from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin
 import json
-from rest_framework.decorators import action
 
 
 class QuizViewSet(ModelViewSet):
@@ -112,17 +111,16 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
         return Response(results, status=status.HTTP_201_CREATED)
 
 
-class QuizAnalysisViewSet(RetrieveModelMixin,ListModelMixin,GenericViewSet):
+class QuizAnalysisViewSet(RetrieveModelMixin, GenericViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
-    permission_classes = [IsAuthenticated]
-    lookup_field='name'
+    permission_classes = [CanSeeAnalysis]
 
-    @action(detail=True, methods=["get"])
-    def analysis(self, request, name=None):
+    def retrieve(self, request, *args, **kwargs):
         quiz = self.get_object()
-
-        count_of_users_who_took_quiz = UserAnswer.objects.get_count_of_users_who_took_quize(quiz.id)
+        self.check_object_permissions(request, quiz)
+        self.check_permissions(request)
+        count_of_users_who_took_quiz = UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
         correct_percentage = UserAnswer.objects.get_correct_percentage(quiz.id)
         hardest_questions = UserAnswer.objects.get_hardest_questions(quiz.id)
 
@@ -135,4 +133,3 @@ class QuizAnalysisViewSet(RetrieveModelMixin,ListModelMixin,GenericViewSet):
         serializer = QuizAnalysisSerializer(analysis_data)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
-

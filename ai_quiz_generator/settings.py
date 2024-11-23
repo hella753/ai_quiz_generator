@@ -39,12 +39,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'user',
-    'quiz_app',
     'rest_framework',
+    'drf_yasg',
     'rest_framework_simplejwt',
     'django_filters',
-    'debug_toolbar'
+    'debug_toolbar',
+    'user',
+    'quiz_app',
 ]
 
 AUTH_USER_MODEL = "user.User"

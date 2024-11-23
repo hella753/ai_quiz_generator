@@ -16,8 +16,6 @@ Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to D
   - [Permissions](#permissions)
   - [URLs](#urls)
 - [Installation](#installation)
-- [Configuration](#configuration)
-- [License](#license)
 
 
 ## Features
@@ -63,3 +61,73 @@ The backend uses Django ORM to define models representing entities like `User`, 
 - **Question**: Contains fields: `question`, `score`, `quiz(fk)`
 - **Quiz**: Contains fields: `name`, `creator(fk)`
 - **ModifiedTimeModel**: Abstract for adding creation and modification times.
+
+
+### Serializers
+Django Rest Framework serializers are used for converting model instances into JSON format and vice versa.
+
+- **AnswerSerializer**: Serializes answer data for CRUD operations.
+- **QuestionSerializer**: Serializes question data for CRUD operations.
+- **QuizSerializer**: Serializes quiz data for CRUD operations.
+- **InputSerializer**: Serializes input data for quiz generating.
+- **AnswerCheckerSerializer**: Serializes input data for checking answers.
+- **UserAnswerCheckerSerializer**: Serializes output data for checking and creating answers.
+- **RegistrationSerializer**: Serializes input data for user registration.
+- **UserAnswerSerializer/UserQuestionSerializer/UserQuizSerializer**: Serializes data for personal account viewset.
+- **QuizForCreatorSerializer**: Serializes data for quiz creator viewset.
+- **CreatedQuizeDeatilSerializer**: Serializes data for quiz creator detail viewset.
+
+
+### ViewSets
+Django Rest Framework viewsets are used for handling CRUD operations for models.
+
+- **QuizViewSet**: Generates Quiz and handles CRUD operations.
+- **AnswerCheckerViewSet**: Checks answers with AI and creates UserAnswer objects.
+- **CreateUserViewSet**: Registers a new user.
+- **TakenQuizViewSet**: Lists all quizzes user took.
+- **CreatedQuizViewSet**: Lists all quizzes user created with statistics.
+
+
+### Permissions
+- **IsCreater**: Custom permission for checking if the user is the creator of the quiz.
+- **IsThisUser**: Custom permission for checking if the user is the owner of the account.
+
+
+### URLs
+The URLs are routed through Django’s URL dispatcher and include versioning for better API management.
+
+- `api/`: Base URL for API.
+- `accounts/`: Base URL for user authentication.
+- `/`: Swagger API documentation.
+
+
+## Installation
+To set up the project locally, follow these steps:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/hella753/ai_quiz_generator.git
+   cd ai_quiz_generator
+   ```
+   
+2. Create a virtual environment and install dependencies:
+   ```bash
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
+   
+3. Apply migrations:
+    ```bash
+    python manage.py migrate
+    ```
+   
+4. Create a superuser:
+    ```bash
+    python manage.py createsuperuser
+    ```
+   
+5. Run the development server:
+    ```bash
+    python manage.py runserver
+    ```

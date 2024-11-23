@@ -124,9 +124,10 @@ class QuizAnalysisViewSet(RetrieveModelMixin,ListModelMixin,GenericViewSet):
     queryset = Quiz.objects.all()
     serializer_class = QuizSerializer
     permission_classes = [IsAuthenticated]
+    lookup_field='name'
 
     @action(detail=True, methods=["get"])
-    def analysis(self, request, pk=None):
+    def analysis(self, request, name=None):
         quiz = self.get_object()
 
         count_of_users_who_took_quize = UserAnswer.objects.get_count_of_users_who_took_quize(quiz.id)

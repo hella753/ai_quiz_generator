@@ -11,20 +11,17 @@ from exceptions import DanyTornikeException
 class RegistrationSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password']
+        fields = ["id", "username", "email", "password"]
 
     def create(self, validated_data):
-        user = User(
-            email=validated_data['email'],
-            username=validated_data['username']
-        )
-        user.set_password(validated_data['password'])
+        user = User(email=validated_data["email"], username=validated_data["username"])
+        user.set_password(validated_data["password"])
         user.save()
         return user
 
     def validate(self, data):
         username = data.get("username")
-        normalized_username = re.sub(r'[^a-zA-Z]', '', username).lower()
+        normalized_username = re.sub(r"[^a-zA-Z]", "", username).lower()
         if normalized_username == "tornike":
             raise DanyTornikeException()
         return super().validate(data)
@@ -51,3 +48,6 @@ class UserQuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quiz
         exclude = ["created_at", "updated_at"]
+
+
+

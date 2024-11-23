@@ -1,6 +1,6 @@
 from django.db import models
 from django.db.models import Count, F
-from django.db.models import Case, When, Value, BooleanField
+from django.db.models import Case, When
 
 class UserAnswerManager(models.Manager):
     
@@ -34,3 +34,39 @@ class UserAnswerManager(models.Manager):
                 'percentage_incorrect': question['incorrect_percentage']
             })
         return hardest_questions
+    
+
+class QuizManager(models.Manager):
+    def get_count_Of_who_took_this_quiz(self, quiz):
+        from .models import UserAnswer  
+        return UserAnswer.objects.filter(question__quiz=quiz).values('user', 'guest').distinct().count()
+
+    def get_users_who_took_This_quiz(self, quiz):
+        from .models import UserAnswer  
+     
+        user_answers = UserAnswer.objects.filter(question__quiz=quiz).select_related('user')
+        users = []
+        seen_users = set()
+
+        for user_answer in user_answers:
+            participant_key = user_answer.user.id if user_answer.user else user_answer.guest
+            if participant_key not in seen_users:
+                seen_users.add(participant_key)
+                users_data = {
+                    "answer": user_answer.answer,
+                    "correct": user_answer.correct,
+                    "explanation": user_answer.explanation,
+                    "guest": user_answer.guest,
+                }
+                if user_answer.user:
+                    users_data["user"] = {
+                        "id": user_answer.user.id,
+                        "username": user_answer.user.username,
+                        "email": user_answer.user.email,
+                    }
+                else:
+                    users_data["guest"] = user_answer.guest
+
+                users.append(users_data)
+
+        return users

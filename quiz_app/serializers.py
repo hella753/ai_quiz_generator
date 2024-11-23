@@ -94,6 +94,6 @@ class HardestQuestionSerializer(serializers.Serializer):
     percentage_incorrect = serializers.FloatField()
 
 class QuizAnalysisSerializer(serializers.Serializer):
-    count_of_users_who_took_quize = serializers.IntegerField()
+    count_of_users_who_took_quiz = serializers.IntegerField()
     correct_percentage = serializers.FloatField()
     hardest_questions = HardestQuestionSerializer(many=True)

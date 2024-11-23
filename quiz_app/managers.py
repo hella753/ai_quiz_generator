@@ -4,11 +4,11 @@ from django.db.models import Case, When
 
 class UserAnswerManager(models.Manager):
     
-    def get_count_of_users_who_took_quize(self, quiz_id):
+    def get_count_of_users_who_took_quiz(self, quiz_id):
         return self.filter(question__quiz__id=quiz_id).values('user').distinct().count()
 
     def get_correct_percentage(self, quiz_id):
-        total_users = self.get_count_of_users_who_took_quize(quiz_id)
+        total_users = self.get_count_of_users_who_took_quiz(quiz_id)
         if total_users == 0:
             return 0.0
         all_correct_count = self.filter(
@@ -37,11 +37,11 @@ class UserAnswerManager(models.Manager):
     
 
 class QuizManager(models.Manager):
-    def get_count_Of_who_took_this_quiz(self, quiz):
+    def get_count_of_who_took_this_quiz(self, quiz):
         from .models import UserAnswer  
         return UserAnswer.objects.filter(question__quiz=quiz).values('user', 'guest').distinct().count()
 
-    def get_users_who_took_This_quiz(self, quiz):
+    def get_users_who_took_this_quiz(self, quiz):
         from .models import UserAnswer  
         user_answers = UserAnswer.objects.filter(question__quiz=quiz).select_related('user')
         users = []

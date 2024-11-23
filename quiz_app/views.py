@@ -122,12 +122,12 @@ class QuizAnalysisViewSet(RetrieveModelMixin,ListModelMixin,GenericViewSet):
     def analysis(self, request, name=None):
         quiz = self.get_object()
 
-        count_of_users_who_took_quize = UserAnswer.objects.get_count_of_users_who_took_quize(quiz.id)
+        count_of_users_who_took_quiz = UserAnswer.objects.get_count_of_users_who_took_quize(quiz.id)
         correct_percentage = UserAnswer.objects.get_correct_percentage(quiz.id)
         hardest_questions = UserAnswer.objects.get_hardest_questions(quiz.id)
 
         analysis_data = {
-            "count_of_users_who_took_quize": count_of_users_who_took_quize,
+            "count_of_users_who_took_quiz": count_of_users_who_took_quiz,
             "correct_percentage": correct_percentage,
             "hardest_questions": hardest_questions,
         }

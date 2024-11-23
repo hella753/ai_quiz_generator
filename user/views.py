@@ -74,7 +74,7 @@ class UserViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, RetrieveMode
             return super().perform_create(serializer)
 
 
-class UsersQuizzesView(
+class UserQuizViewSet(
     RetrieveModelMixin,
     UpdateModelMixin,
     DestroyModelMixin,

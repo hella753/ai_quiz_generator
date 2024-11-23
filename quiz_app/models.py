@@ -85,3 +85,8 @@ class UserAnswer(ModifiedTimeModel):
 
     def __str__(self):
         return f"{self.answer}"
+
+    def get_score(self):
+        if self.correct:
+            return self.question.score
+        return 0.0

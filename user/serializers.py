@@ -28,10 +28,14 @@ class RegistrationSerializer(ModelSerializer):
 
 
 class UserAnswerSerializer(serializers.ModelSerializer):
+    score = serializers.SerializerMethodField()
+
     class Meta:
         model = UserAnswer
         exclude = ["question", "created_at", "updated_at", "user", "guest"]
 
+    def get_score(self, obj):
+        return obj.get_score()
 
 class UserQuestionSerializer(serializers.ModelSerializer):
     answers = AnswerSerializer(many=True)

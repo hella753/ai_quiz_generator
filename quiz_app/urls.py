@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from quiz_app.views import QuizViewSet, CheckAnswersViewSet
+from quiz_app.views import *
 from django.urls import path, include
 
 app_name = "quiz"

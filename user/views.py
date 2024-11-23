@@ -15,9 +15,15 @@ from .serializers import UserQuizSerializer
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.email_sender import EmailSender
 from user.models import User
-from user.serializers import RegistrationSerializer,CreatedQuizeDeatilSerializer,QuizForCreatorSerializer
+from user.serializers import (
+    RegistrationSerializer,
+    CreatedQuizeDeatilSerializer,
+    QuizForCreatorSerializer,
+)
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from rest_framework.decorators import action
+from quiz_app.models import UserAnswer
 
 
 class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
@@ -79,31 +85,26 @@ class CreatedQuizViewSet(
     ListModelMixin,
     GenericViewSet,
 ):
-   
+
     serializer_class = SerializerFactory(
         default=QuizForCreatorSerializer,
         retrieve=CreatedQuizeDeatilSerializer,
-        list=QuizForCreatorSerializer
+        list=QuizForCreatorSerializer,
     )
     permission_classes = [IsCreater]
-    # queryset = Quiz.objects.all()
 
     def get_queryset(self):
         return Quiz.objects.filter(creator=self.request.user)
 
-    def list(self, request, *args, **kwargs):
-
-        return super().list(request, *args, **kwargs)
-
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
         quiz = get_object_or_404(Quiz.objects.prefetch_related("questions"), pk=pk)
-        total_score = quiz.get_total_score()  
+        total_score = quiz.get_total_score()
         users_count = Quiz.objects.get_count_of_who_took_this_quiz(quiz)
         users = Quiz.objects.get_users_who_took_this_quiz(quiz)
 
         data = {
-            "id": str(quiz.id),  
+            "id": str(quiz.id),
             "name": quiz.name,
             "creator": quiz.creator.username,
             "total_score": total_score,
@@ -115,3 +116,24 @@ class CreatedQuizViewSet(
         if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(
+        detail=True,
+        methods=["get"],
+        url_path="analytics",
+        permission_classes=[IsCreater],
+    )
+    def analytics(self, request, pk=None):
+        quiz = get_object_or_404(Quiz, pk=pk, creator=request.user)
+
+        total_users = UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
+        correct_percentage = UserAnswer.objects.get_correct_percentage(quiz.id)
+        hardest_questions = UserAnswer.objects.get_hardest_questions(quiz.id)
+
+        analytics_data = {
+            "total_users": total_users,
+            "correct_percentage": correct_percentage,
+            "hardest_questions": hardest_questions,
+        }
+
+        return Response(analytics_data, status=status.HTTP_200_OK)

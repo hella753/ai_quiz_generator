@@ -65,3 +65,13 @@ class CreatedQuizeDeatilSerializer(serializers.Serializer):
     total_score = serializers.IntegerField()  
     users_count = serializers.IntegerField() 
     users = serializers.ListField(child=serializers.DictField()) 
+
+
+class HardestQuestionSerializer(serializers.Serializer):
+    question = serializers.CharField()
+    percentage_incorrect = serializers.FloatField()
+
+class QuizAnalysisSerializer(serializers.Serializer):
+    count_of_users_who_took_quiz = serializers.IntegerField()
+    correct_percentage = serializers.FloatField()
+    hardest_questions = HardestQuestionSerializer(many=True)

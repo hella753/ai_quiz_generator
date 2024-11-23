@@ -20,40 +20,12 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 
 
-class UserViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, RetrieveModelMixin):
-    """
-    Listingზე არის რეგისტრაცია და შექმნაზე
-    Createზეც რეგისტრაცია
-    Retrieveზე არის იუზერის გავლილი ქუიზები
-    """
-    serializer_class = SerializerFactory(
-        create=RegistrationSerializer,
-        list=RegistrationSerializer,
-        retrieve=UserQuizSerializer,
-        default=RegistrationSerializer,
-    )
+class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
+    serializer_class = RegistrationSerializer
     queryset = User.objects.all()
-    lookup_field = "questions__your_answers__user__username"
-
-    def retrieve(self, request, *args, **kwargs):
-        user_object = User.objects.filter(username=kwargs[self.lookup_field]).first()
-
-        self.check_object_permissions(self.request, user_object)
-
-        qs = (
-            Quiz.objects.select_related("creator")
-            .prefetch_related("questions__your_answers", "questions__answers")
-            .filter(questions__your_answers__user=request.user)
-            .distinct()
-        )
-
-        serializer = UserQuizSerializer(qs, many=True, context={"request": request})
-        return Response(serializer.data)
 
     def get_permissions(self):
-        if self.action == "retrieve":
-            return [IsThisUser()]
-        elif self.action != "create":
+        if self.action != "create":
             return [IsAuthenticated()]
         else:
             return []
@@ -76,6 +48,28 @@ class UserViewSet(GenericViewSet, CreateModelMixin, ListModelMixin, RetrieveMode
             login(self.request, user)
         else:
             return super().perform_create(serializer)
+
+
+class TakenQuizViewSet(GenericViewSet, RetrieveModelMixin):
+    serializer_class = UserQuizSerializer
+    permission_classes = [IsThisUser]
+    queryset = User.objects.all()
+    # works on accounts/taken-quiz/username
+    lookup_field = "questions__your_answers__user__username"
+
+    def retrieve(self, request, *args, **kwargs):
+        user_object = User.objects.filter(username=kwargs[self.lookup_field]).first()
+
+        self.check_object_permissions(self.request, user_object)
+
+        qs = (
+            Quiz.objects.select_related("creator")
+            .prefetch_related("questions__your_answers", "questions__answers")
+            .filter(questions__your_answers__user=request.user)
+            .distinct()
+        )
+        serializer = UserQuizSerializer(qs, many=True, context={"request": request})
+        return Response(serializer.data)
 
 
 class CreatedQuizViewSet(

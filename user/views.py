@@ -15,7 +15,7 @@ from .serializers import UserQuizSerializer
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.email_sender import EmailSender
 from user.models import User
-from user.serializers import RegistrationSerializer
+from user.serializers import RegistrationSerializer,QuizeDeatilSerializer
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from quiz_app.models import UserAnswer
@@ -83,6 +83,7 @@ class UsersQuizzesView(
 ):
     serializer_class = SerializerFactory(
         default=UserQuizSerializer,
+        retrieve=QuizeDeatilSerializer
     )
     permission_classes = [IsCreater]
     queryset = Quiz.objects.all()
@@ -90,12 +91,12 @@ class UsersQuizzesView(
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
         quiz = get_object_or_404(Quiz.objects.prefetch_related("questions"), pk=pk)
-        total_score = quiz.get_total_score()
-        users_count = Quiz.objects.get_count_Of_who_took_this_quiz(quiz)
-        users = Quiz.objects.get_users_who_took_This_quiz(quiz)
-        
+        total_score = quiz.get_total_score()  
+        users_count = Quiz.objects.get_count_Of_who_took_this_quiz(quiz)  
+        users = Quiz.objects.get_users_who_took_This_quiz(quiz)  
+
         data = {
-            "id": quiz.id,
+            "id": str(quiz.id),  
             "name": quiz.name,
             "creator": quiz.creator.username,
             "total_score": total_score,
@@ -103,4 +104,7 @@ class UsersQuizzesView(
             "users": users,
         }
 
-        return Response(data)
+        serializer = self.get_serializer(data=data)
+        if serializer.is_valid():
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

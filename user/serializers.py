@@ -50,4 +50,10 @@ class UserQuizSerializer(serializers.ModelSerializer):
         exclude = ["created_at", "updated_at"]
 
 
-
+class QuizeDeatilSerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    creator = serializers.CharField()
+    total_score = serializers.IntegerField()  
+    users_count = serializers.IntegerField() 
+    users = serializers.ListField(child=serializers.DictField()) 

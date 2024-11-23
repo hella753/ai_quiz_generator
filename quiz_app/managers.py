@@ -43,7 +43,6 @@ class QuizManager(models.Manager):
 
     def get_users_who_took_This_quiz(self, quiz):
         from .models import UserAnswer  
-     
         user_answers = UserAnswer.objects.filter(question__quiz=quiz).select_related('user')
         users = []
         seen_users = set()

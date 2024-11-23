@@ -1,4 +1,5 @@
 from django.contrib.auth import login
+from django.db.models import OuterRef
 from django.shortcuts import get_object_or_404
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
@@ -6,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from quiz_app.models import Quiz
+from quiz_app.models import Quiz, QuizScore
 from quiz_app.permissions import IsThisUser, IsCreater
 from quiz_app.utils.paginators import CustomPaginator
 from .serializers import UserQuizSerializer
@@ -76,6 +77,10 @@ class TakenQuizViewSet(GenericViewSet, RetrieveModelMixin):
             .prefetch_related("questions__your_answers", "questions__answers")
             .filter(questions__your_answers__user=request.user)
             .distinct()
+            .annotate(
+                your_score=QuizScore.objects.filter(
+                    quiz=OuterRef("pk"), user=request.user
+                ).values("score"))
         )
         serializer = UserQuizSerializer(
             qs,

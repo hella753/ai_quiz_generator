@@ -2,6 +2,8 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
+
+from quiz_app.models import QuizScore
 from quiz_app.permissions import IsCreater
 from quiz_app.utils.email_sender import EmailSender
 from quiz_app.utils.file_processor import FileProcessor
@@ -72,9 +74,10 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
         guest = request.data.get("guest")
         answer_data = json.loads(answer_data)
         data = []
-        quiz_creator = Question.objects.filter(
+        quiz = Question.objects.filter(
             id=int(answer_data[0]["question_id"])
-        ).first().quiz.creator
+        ).first().quiz
+        quiz_creator = quiz.creator
         for answer in answer_data:
             question = (Question.objects.select_related('quiz')
                         .filter(id=int(answer["question_id"]))
@@ -83,13 +86,19 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
                 "answer": answer["answer"],
                 "question": question.question,
                 "question_id": question.id,
-                "question_score": answer["question_score"]
+                "question_score": question.score
             }
             data.append(item)
-        print(data)
         results = QuizGenerator().check_answers(str(data))
         answers = results["answers"]
-        print(results)
+        score = results["user_total_score"]
+
+        QuizScore.objects.create(
+            user=request.user,
+            quiz=quiz,
+            score=score
+        )
+
         answers = [
             {**item, "question": item.pop("question_id")} for item in answers
         ]

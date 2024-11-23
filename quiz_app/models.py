@@ -101,3 +101,27 @@ class UserAnswer(ModifiedTimeModel):
         if self.correct:
             return self.question.score
         return 0.0
+
+
+class QuizScore(models.Model):
+    quiz = models.ForeignKey(
+        Quiz,
+        on_delete=models.CASCADE,
+        related_name="scores",
+        verbose_name=_("Quiz")
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="quiz_scores",
+        verbose_name=_("User")
+    )
+    score = models.DecimalField(
+        decimal_places=2,
+        max_digits=5,
+        default=0.0,
+        verbose_name=_("Score")
+    )
+
+    def __str__(self):
+        return f"{self.score}"

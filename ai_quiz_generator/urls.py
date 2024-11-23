@@ -16,42 +16,51 @@ Including another URLconf
 """
 from debug_toolbar.toolbar import debug_toolbar_urls
 from django.conf import settings
+from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 
-
 schema_view = get_schema_view(
-   openapi.Info(
-      title="AI Quiz Generator API",
-      default_version='v1',
-      description='''Backend API built with Django, for AI Quiz Generator. Provides endpoints to handle Quiz Generating, 
+    openapi.Info(
+        title="AI Quiz Generator API",
+        default_version='v1',
+        description='''Backend API built with Django, for AI Quiz Generator. Provides endpoints to handle Quiz Generating, 
                     Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to Develop their skills and make studying easier.,''',
-      terms_of_service="https://www.google.com/policies/terms/",
-      contact=openapi.Contact(email="interpredators.django@gmail.com"),
-      license=openapi.License(name='''Copyright (c) 2024 Interpredators /
+        terms_of_service="https://www.google.com/policies/terms/",
+        contact=openapi.Contact(email="interpredators.django@gmail.com"),
+        license=openapi.License(name='''Copyright (c) 2024 Interpredators /
                                     Created by: Interpredators /
                                     Date: November 25, 2024'''),
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,),
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+
     path('accounts/', include('user.urls', namespace="user")),
     path('api-auth/', include('rest_framework.urls')),
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/', include('quiz_app.urls', namespace="quiz_app")),
-    path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
 
 ]
+
+urlpatterns += i18n_patterns(
+    path('admin/', admin.site.urls),
+    path('', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
+)
 
 if settings.DEBUG:
     urlpatterns += debug_toolbar_urls()
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+if 'rosetta' in settings.INSTALLED_APPS:
+    urlpatterns += [
+        re_path(r'^rosetta/', include('rosetta.urls'))
+    ]

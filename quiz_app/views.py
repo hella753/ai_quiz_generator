@@ -83,14 +83,18 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
                 "answer": answer["answer"],
                 "question": question.question,
                 "question_id": question.id,
+                "question_score": answer["question_score"]
             }
             data.append(item)
+        print(data)
         results = QuizGenerator().check_answers(str(data))
-        results = [
-            {**item, "question": item.pop("question_id")} for item in results
+        answers = results["answers"]
+        print(results)
+        answers = [
+            {**item, "question": item.pop("question_id")} for item in answers
         ]
         serializer = UserAnswerCheckerSerializer(
-            data=results,
+            data=answers,
             many=True,
             context={"request": request, "guest": guest}
         )

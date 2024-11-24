@@ -1,5 +1,5 @@
 # AI Quiz Generator
-Backend API built with **Django**, for AI Quiz Generator. Provides endpoints to handle Quiz Generating, 
+Backend API built with **Django**, for AI Quiz Generator which uses openAI api. Provides endpoints to handle Quiz Generating, 
 Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to Develop their skills and make studying easier.
 
 ![Logo](/logo.png)

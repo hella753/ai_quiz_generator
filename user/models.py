@@ -56,9 +56,3 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.username}"
-
-
-class GuestUser(AnonymousUser):
-    def __init__(self, name):
-        super().__init__()
-        self.name = name

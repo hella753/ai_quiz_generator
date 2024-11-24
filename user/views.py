@@ -7,12 +7,10 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from quiz_app.permissions import IsThisUser, IsCreater
+from quiz_app.permissions import IsThisUser, IsCreater, CanSeeAnalysis
 from quiz_app.utils.paginators import CustomPaginator
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.email_sender import EmailSender
-from quiz_app.models import UserAnswer, Quiz, QuizScore
-from .models import User
 from .serializers import *
 
 
@@ -90,8 +88,7 @@ class CreatedQuizViewSet(
         GenericViewSet
 ):
     """
-    This ViewSet is responsible for getting, updating, deleting,
-    and listing the quizzes created by the user.
+    This ViewSet is responsible for getting quizzes created by the user.
     """
     serializer_class = SerializerFactory(
         default=QuizForCreatorSerializer,
@@ -99,13 +96,17 @@ class CreatedQuizViewSet(
         list=QuizForCreatorSerializer,
     )
     pagination_class = CustomPaginator
-    permission_classes = [IsCreater]
+    permission_classes = [IsAuthenticated, IsCreater]
 
     def get_queryset(self):
         if not self.request.user.is_anonymous:
             return Quiz.objects.filter(creator=self.request.user)
         return Quiz.objects.none()
 
+    def get_permissions(self):
+        if self.action == "retrieve":
+            return [CanSeeAnalysis()]
+        return super().get_permissions()
 
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
@@ -113,6 +114,7 @@ class CreatedQuizViewSet(
             Quiz.objects.prefetch_related("questions"),
             pk=pk
         )
+        self.check_object_permissions(self.request, quiz)
         total_score = quiz.get_total_score()
         users_count = Quiz.objects.get_count_of_who_took_this_quiz(quiz)
         users = Quiz.objects.get_users_who_took_this_quiz(quiz)
@@ -134,7 +136,7 @@ class CreatedQuizViewSet(
     @action(detail=True,methods=["get"],url_path="analytics",permission_classes=[IsCreater],)
     def analytics(self, request, pk=None):
         """
-        This method is responsible for getting the analytics of the quiz.
+        This action is responsible for getting the analytics of the quiz.
         """
         quiz = get_object_or_404(Quiz, pk=pk, creator=request.user)
         

@@ -13,4 +13,3 @@ class AnonymousUserMiddleware(MiddlewareMixin):
             if "guest_user_name" not in request.session:
                 unique_id = uuid.uuid4()
                 request.session["guest_user_name"] = f"Guest-{unique_id}"
-            user.name = request.session["guest_user_name"]

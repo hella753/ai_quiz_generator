@@ -91,7 +91,6 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
         results = QuizGenerator().check_answers(str(data))
         answers = results["answers"]
         score = results["user_total_score"]
-
         serializer = QuizScoreSerializer(
             data={
                 "quiz": quiz.id,
@@ -99,7 +98,6 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
             },
             context={"request": request, "guest": guest}
         )
-
         if serializer.is_valid():
             serializer.save()
 

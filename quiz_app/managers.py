@@ -65,34 +65,34 @@ class QuizManager(models.Manager):
 
     def get_users_who_took_this_quiz(self, quiz):
         from .models import UserAnswer
+
         user_answers = (
             UserAnswer.objects.filter(question__quiz=quiz)
-            .select_related('user')
+            .select_related('user', 'question')
         )
-        users = []
-        seen_users = set()
-
+        users = {}
         for user_answer in user_answers:
             participant_key = (
-                user_answer.user.id if user_answer.user else user_answer.guest
+                user_answer.user.id if user_answer.user else f"guest-{user_answer.guest}"
             )
-            if participant_key not in seen_users:
-                seen_users.add(participant_key)
-                users_data = {
-                    "answer": user_answer.answer,
-                    "correct": user_answer.correct,
-                    "explanation": user_answer.explanation,
-                    "guest": user_answer.guest,
-                }
-                if user_answer.user:
-                    users_data["user"] = {
-                        "id": user_answer.user.id,
-                        "username": user_answer.user.username,
-                        "email": user_answer.user.email,
-                    }
-                else:
-                    users_data["guest"] = user_answer.guest
 
-                users.append(users_data)
+            if participant_key not in users:
+                users[participant_key] = {
+                    "user": {
+                        "id": user_answer.user.id if user_answer.user else None,
+                        "username": user_answer.user.username if user_answer.user else None,
+                        "email": user_answer.user.email if user_answer.user else None,
+                    } if user_answer.user else {
+                        "guest": user_answer.guest,
+                    },
+                    "answers": []
+            }
+        
+            users[participant_key]["answers"].append({
+                "question_id": user_answer.question.id,
+                "answer": user_answer.answer,
+                "correct": user_answer.correct,
+                "explanation": user_answer.explanation,
+            })
 
-        return users
+        return list(users.values())

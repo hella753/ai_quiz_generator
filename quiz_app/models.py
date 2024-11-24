@@ -103,7 +103,7 @@ class UserAnswer(ModifiedTimeModel):
         return 0.0
 
 
-class QuizScore(models.Model):
+class QuizScore(ModifiedTimeModel):
     quiz = models.ForeignKey(
         Quiz,
         on_delete=models.CASCADE,
@@ -112,6 +112,8 @@ class QuizScore(models.Model):
     )
     user = models.ForeignKey(
         User,
+        null=True,
+        blank=True,
         on_delete=models.CASCADE,
         related_name="quiz_scores",
         verbose_name=_("User")
@@ -122,6 +124,7 @@ class QuizScore(models.Model):
         default=0.0,
         verbose_name=_("Score")
     )
+    guest = models.CharField(max_length=25, null=True, blank=True)
 
     def __str__(self):
         return f"{self.score}"

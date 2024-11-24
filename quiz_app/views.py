@@ -2,8 +2,6 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-
-from quiz_app.models import QuizScore
 from quiz_app.permissions import IsCreater
 from quiz_app.utils.email_sender import EmailSender
 from quiz_app.utils.file_processor import FileProcessor
@@ -13,6 +11,7 @@ from quiz_app.utils.serializer_utils import SerializerFactory
 from quiz_app.serializers import *
 from rest_framework.mixins import CreateModelMixin
 import json
+from user.serializers import QuizScoreSerializer
 
 
 class QuizViewSet(ModelViewSet):
@@ -93,22 +92,29 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
         answers = results["answers"]
         score = results["user_total_score"]
 
-        QuizScore.objects.create(
-            user=request.user,
-            quiz=quiz,
-            score=score
+        serializer = QuizScoreSerializer(
+            data={
+                "quiz": quiz.id,
+                "score": score
+            },
+            context={"request": request, "guest": guest}
         )
+
+        if serializer.is_valid():
+            serializer.save()
 
         answers = [
             {**item, "question": item.pop("question_id")} for item in answers
         ]
+
         serializer = UserAnswerCheckerSerializer(
             data=answers,
             many=True,
             context={"request": request, "guest": guest}
         )
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
+        if serializer.is_valid():
+            serializer.save()
+
         if guest:
             user = guest
         else:

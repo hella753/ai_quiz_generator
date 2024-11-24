@@ -1,8 +1,8 @@
 import re
 from rest_framework import serializers
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.serializers import ModelSerializer
-from quiz_app.models import Answer, Question, Quiz, UserAnswer
+from quiz_app.models import Answer, Question, Quiz, UserAnswer, QuizScore
 from quiz_app.serializers import AnswerSerializer
 from user.models import User
 from exceptions import DanyTornikeException
@@ -63,6 +63,43 @@ class UserQuizSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quiz
         exclude = ["created_at", "updated_at"]
+
+
+class QuizScoreSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = QuizScore
+        exclude = ["user", "guest"]
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        guest = self.context.get("guest")
+        quiz = validated_data.get("quiz")
+        score = validated_data.get("score")
+
+        if request.user.is_authenticated:
+            quiz_score = QuizScore.objects.create(
+                user=request.user,
+                quiz=quiz,
+                score=score
+            )
+        else:
+            if guest:
+                request.session["guest_user_name"] = guest
+            guest_name = request.session.get("guest_user_name")
+            quiz_score = QuizScore.objects.create(
+                guest=guest_name,
+                quiz=quiz,
+                score=score
+            )
+        return quiz_score
+
+    def validate(self, data):
+        request = self.context.get("request")
+        quiz = data.get("quiz")
+        if request.user.is_authenticated:
+            if QuizScore.objects.filter(user=request.user, quiz=quiz).exists():
+                raise ValidationError("You have already taken this quiz")
+        return super().validate(data)
 
 
 class QuizForCreatorSerializer(serializers.ModelSerializer):

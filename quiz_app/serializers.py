@@ -2,7 +2,6 @@ from django.db import transaction
 from rest_framework import serializers
 from quiz_app.models import Quiz, Question, Answer, UserAnswer
 from quiz_app.utils.update_quiz import QuizUpdater
-from user.models import User
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -102,3 +101,12 @@ class UserAnswerCheckerSerializer(serializers.ModelSerializer):
             ]
             with transaction.atomic():
                 UserAnswer.objects.bulk_create(answers)
+
+
+    def validate(self, data):
+        user = self.context.get("request").user
+        question = data.get("question")
+        if user.is_authenticated:
+            if UserAnswer.objects.filter(user=user, question=question).exists():
+                raise serializers.ValidationError("You have already taken this quiz")
+        return data

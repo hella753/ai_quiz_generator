@@ -1,0 +1,5 @@
+//correct format for swagger
+{
+  "_user_answers": "[{\"question_id\": \"12\", \"answer\": \"1991\"}, {\"question_id\": \"13\", \"answer\": \"არ მახსოვს\"}]",
+  "guest": null
+}

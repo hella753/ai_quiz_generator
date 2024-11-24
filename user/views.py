@@ -137,32 +137,21 @@ class CreatedQuizViewSet(
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(
-        detail=True,
-        methods=["get"],
-        url_path="analytics",
-        permission_classes=[IsCreater],
-    )
+    @action(detail=True,methods=["get"],url_path="analytics",permission_classes=[IsCreater],)
     def analytics(self, request, pk=None):
         """
         This method is responsible for getting the analytics of the quiz.
         """
         quiz = get_object_or_404(Quiz, pk=pk, creator=request.user)
 
-        total_users = (
-            UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
-        )
-        correct_percentage = (
-            UserAnswer.objects.get_correct_percentage(quiz.id)
-        )
-        hardest_questions = (
-            UserAnswer.objects.get_hardest_questions(quiz.id)
-        )
+        total_users = (UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id))
+        correct_percentage = (UserAnswer.objects.get_correct_percentage(quiz.id))
+        hardest_questions = (UserAnswer.objects.get_hardest_questions(quiz.id))
 
         analytics_data = {
             "total_users": total_users,
             "correct_percentage": correct_percentage,
             "hardest_questions": hardest_questions,
         }
-
+        
         return Response(analytics_data, status=status.HTTP_200_OK)

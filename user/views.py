@@ -112,6 +112,8 @@ class CreatedQuizViewSet(
     def get_queryset(self):
         if not self.request.user.is_anonymous:
             return Quiz.objects.filter(creator=self.request.user)
+        return Quiz.objects.none()
+
 
     def retrieve(self, request, *args, **kwargs):
         pk = kwargs.get("pk")
@@ -143,7 +145,7 @@ class CreatedQuizViewSet(
         This method is responsible for getting the analytics of the quiz.
         """
         quiz = get_object_or_404(Quiz, pk=pk, creator=request.user)
-
+        
         total_users = (UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id))
         correct_percentage = (UserAnswer.objects.get_correct_percentage(quiz.id))
         hardest_questions = (UserAnswer.objects.get_hardest_questions(quiz.id))
@@ -153,5 +155,5 @@ class CreatedQuizViewSet(
             "correct_percentage": correct_percentage,
             "hardest_questions": hardest_questions,
         }
-        
+
         return Response(analytics_data, status=status.HTTP_200_OK)

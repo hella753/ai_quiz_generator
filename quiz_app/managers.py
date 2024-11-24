@@ -9,7 +9,7 @@ class UserAnswerManager(models.Manager):
     def get_count_of_users_who_took_quiz(self, quiz_id):
         return (
             self.filter(question__quiz__id=quiz_id)
-            .values('user')
+            .values('user','guest')
             .distinct()
             .count()
         )
@@ -21,7 +21,7 @@ class UserAnswerManager(models.Manager):
         all_correct_count = self.filter(
             question__quiz__id=quiz_id,
             correct=True
-        ).values('user').distinct().count()
+        ).values('user','guest').distinct().count()
         return (all_correct_count / total_users) * 100
 
     def get_hardest_questions(self, quiz_id):

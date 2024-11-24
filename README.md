@@ -19,6 +19,7 @@ Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to D
   - [Permissions](#permissions)
   - [URLs](#urls)
 - [Installation](#installation)
+- [Credits](#Credits)
 
 
 ## Features
@@ -29,8 +30,8 @@ Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to D
 - **Middleware**: Middleware for handling Guest sessions.
 - **Email Sending**: Handles Message Sending to registered users and creators.
 - **Managers**: Provides some basic statistics for the users.
-- **Internationalization and localization**: Supports two languages - English/Georgian. (not yet)
-- **Pagination**: Pagination support for large datasets. (not yet)
+- **Internationalization and localization**.
+- **Pagination**: Pagination support for large datasets. 
 
 
 ## Endpoints
@@ -47,7 +48,6 @@ Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to D
 - `DELETE /api/quiz/{id}/`: Deletes a specific quiz (creator only).
 ### Quiz Correcting
 - `POST /api/quiz/`: Checks answers with AI and creates UserAnswer objects. Returns JSON with questions, answers and explanation.
-
 ### Personal Accounts
 - `GET /accounts/taken-quiz/{username}/`: Lists all quizzes user took (Himself Only).
 - `GET /accounts/created-quiz/`: Lists all quizzes user created. 
@@ -63,6 +63,7 @@ The backend uses Django ORM to define models representing entities like `User`, 
 - **UserAnswer**: Contains fields: `answer`, `correct`, `question(fk)`, `user(fk)`, `guest`, `explanation` also method `get_score()`
 - **Question**: Contains fields: `question`, `score`, `quiz(fk)`
 - **Quiz**: Contains fields: `name`, `creator(fk)`
+- **QuizScore**: Contains fields: `score`, `user(fk)`, `quiz(fk)`, `guest`
 - **ModifiedTimeModel**: Abstract for adding creation and modification times.
 
 
@@ -77,8 +78,11 @@ Django Rest Framework serializers are used for converting model instances into J
 - **UserAnswerCheckerSerializer**: Serializes output data for checking and creating answers.
 - **RegistrationSerializer**: Serializes input data for user registration.
 - **UserAnswerSerializer/UserQuestionSerializer/UserQuizSerializer**: Serializes data for personal account viewset.
+- **QuizScoreSerializer**: Serializes data for quiz score.
 - **QuizForCreatorSerializer**: Serializes data for quiz creator viewset.
 - **CreatedQuizeDeatilSerializer**: Serializes data for quiz creator detail viewset.
+- **QuizAnalysisSerializer**: Serializes data for quiz analysis.
+- **HardestQuestionSerializer**: Serializes data for hardest question.
 
 
 ### ViewSets
@@ -94,11 +98,11 @@ Django Rest Framework viewsets are used for handling CRUD operations for models.
 ### Permissions
 - **IsCreater**: Custom permission for checking if the user is the creator of the quiz.
 - **IsThisUser**: Custom permission for checking if the user is the owner of the account.
+- **CanSeeAnalysis**: Custom permission for safe methods, checking if the user is the owner of the account.
 
 
 ### URLs
-The URLs are routed through Django’s URL dispatcher and include versioning for better API management.
-
+The URLs are routed through Django’s URL dispatcher.
 - `api/`: Base URL for API.
 - `accounts/`: Base URL for user authentication.
 - `/`: Swagger API documentation.
@@ -134,3 +138,10 @@ To set up the project locally, follow these steps:
     ```bash
     python manage.py runserver
     ```
+
+## Credits
+- **[Collaborator GigaDarchia](https://github.com/GigaDarchia)**
+- **[Collaborator Gogeishvili](https://github.com/Gogeishvili)**
+
+Collaborated on building and maintaining the backend infrastructure
+Special thanks to all contributors who helped make this project possible!

@@ -57,6 +57,9 @@ class UserQuestionSerializer(serializers.ModelSerializer):
 
 
 class UserQuizSerializer(serializers.ModelSerializer):
+    """
+    Purpose of this serializer is to display taken quizes.
+    """
     questions = UserQuestionSerializer(many=True)
     your_score = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
 
@@ -66,6 +69,9 @@ class UserQuizSerializer(serializers.ModelSerializer):
 
 
 class QuizScoreSerializer(serializers.ModelSerializer):
+    """
+    Purpose of this serializer is to create and validate quiz scores.
+    """
     class Meta:
         model = QuizScore
         exclude = ["user", "guest"]

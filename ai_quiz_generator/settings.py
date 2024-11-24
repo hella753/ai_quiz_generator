@@ -172,5 +172,5 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'exceptions.handler.custom_exception_handler',
 }
 
-CORS_ORIGIN_ALLOW_ALL: True
-CORS_ALLOW_CREDENTIALS: True
+CORS_ORIGIN_ALLOW_ALL = True
+CORS_ALLOW_CREDENTIALS = True

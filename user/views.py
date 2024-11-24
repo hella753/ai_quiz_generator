@@ -86,8 +86,6 @@ class TakenQuizViewSet(GenericViewSet, RetrieveModelMixin):
 
 class CreatedQuizViewSet(
         RetrieveModelMixin,
-        UpdateModelMixin,
-        DestroyModelMixin,
         ListModelMixin,
         GenericViewSet
 ):

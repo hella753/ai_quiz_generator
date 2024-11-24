@@ -1,11 +1,11 @@
 import re
 from rest_framework import serializers
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer
-from quiz_app.models import Answer, Question, Quiz, UserAnswer, QuizScore
-from quiz_app.serializers import AnswerSerializer
-from user.models import User
 from exceptions import DanyTornikeException
+from quiz_app.models import Question, Quiz, UserAnswer, QuizScore
+from quiz_app.serializers import AnswerSerializer
+from .models import *
 
 
 class RegistrationSerializer(ModelSerializer):

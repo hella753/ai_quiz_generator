@@ -7,19 +7,13 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from quiz_app.models import Quiz, QuizScore
 from quiz_app.permissions import IsThisUser, IsCreater
 from quiz_app.utils.paginators import CustomPaginator
-from .serializers import UserQuizSerializer
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.email_sender import EmailSender
+from quiz_app.models import UserAnswer, Quiz, QuizScore
 from .models import User
-from .serializers import (
-    RegistrationSerializer,
-    CreatedQuizeDeatilSerializer,
-    QuizForCreatorSerializer,
-)
-from quiz_app.models import UserAnswer
+from .serializers import *
 
 
 class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):

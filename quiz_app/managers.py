@@ -1,6 +1,5 @@
 from django.db import models
-from django.db.models import Count, F
-from django.db.models import Case, When
+from django.db.models import Case, When,Count, F
 
 
 class UserAnswerManager(models.Manager):

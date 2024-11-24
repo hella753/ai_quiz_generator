@@ -1,5 +1,5 @@
 from rest_framework.routers import DefaultRouter
-from user.views import CreatedQuizViewSet, CreateUserViewSet, TakenQuizViewSet
+from .views import *
 
 
 app_name="user"

@@ -1,17 +1,17 @@
+import json
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
-from quiz_app.permissions import IsCreater
-from quiz_app.utils.email_sender import EmailSender
-from quiz_app.utils.file_processor import FileProcessor
-from quiz_app.utils.ai_generator import QuizGenerator
-from quiz_app.utils.paginators import CustomPaginator
-from quiz_app.utils.serializer_utils import SerializerFactory
-from quiz_app.serializers import *
 from rest_framework.mixins import CreateModelMixin
-import json
 from user.serializers import QuizScoreSerializer
+from .utils.serializer_utils import SerializerFactory
+from .utils.paginators import CustomPaginator
+from .utils.ai_generator import QuizGenerator
+from .utils.file_processor import FileProcessor
+from .utils.email_sender import EmailSender
+from .permissions import IsCreater
+from .serializers import *
 
 
 class QuizViewSet(ModelViewSet):

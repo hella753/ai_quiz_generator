@@ -1,6 +1,6 @@
 from rest_framework.routers import DefaultRouter
-from quiz_app.views import *
 from django.urls import path, include
+from .views import *
 
 app_name = "quiz"
 

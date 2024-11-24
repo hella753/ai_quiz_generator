@@ -1,7 +1,7 @@
 from django.db import transaction
 from rest_framework import serializers
-from quiz_app.models import Quiz, Question, Answer, UserAnswer
 from quiz_app.utils.update_quiz import QuizUpdater
+from .models import *
 
 
 class AnswerSerializer(serializers.ModelSerializer):

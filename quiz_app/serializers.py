@@ -1,5 +1,7 @@
+import re
 from django.db import transaction
 from rest_framework import serializers
+from exceptions import DanyTornikeException
 from quiz_app.utils.update_quiz import QuizUpdater
 from .models import *
 
@@ -102,11 +104,15 @@ class UserAnswerCheckerSerializer(serializers.ModelSerializer):
             with transaction.atomic():
                 UserAnswer.objects.bulk_create(answers)
 
-
     def validate(self, data):
         user = self.context.get("request").user
         question = data.get("question")
+        guest = self.context.get("guest")
         if user.is_authenticated:
             if UserAnswer.objects.filter(user=user, question=question).exists():
                 raise serializers.ValidationError("You have already taken this quiz")
-        return data
+        elif self.context.get("guest"):
+            normalized_username = re.sub(r"[^a-zA-Z]", "", guest).lower()
+            if normalized_username == "tornike":
+                raise DanyTornikeException()
+        return super().validate(data)

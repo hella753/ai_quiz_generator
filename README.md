@@ -143,5 +143,5 @@ To set up the project locally, follow these steps:
 - **[Collaborator GigaDarchia](https://github.com/GigaDarchia)**
 - **[Collaborator Gogeishvili](https://github.com/Gogeishvili)**
 
-Collaborated on building and maintaining the backend infrastructure
+Collaborated on building and maintaining the backend infrastructure. <br>
 Special thanks to all contributors who helped make this project possible!

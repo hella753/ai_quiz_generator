@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
 from user.serializers import QuizScoreSerializer
+from .exceptions import QuizGenerationError
 from .utils.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
 from .utils.ai_generator import QuizGenerator
@@ -39,11 +40,14 @@ class QuizViewSet(ModelViewSet):
         creator_input = request.data.get("_input")
         quiz_generator = QuizGenerator()
 
-        if file:
-            text = FileProcessor(file).process_file()
-            data = quiz_generator.generate_quiz(creator_input, text)
-        else:
-            data = quiz_generator.generate_quiz(creator_input)
+        try:
+            if file:
+                text = FileProcessor(file).process_file()
+                data = quiz_generator.generate_quiz(creator_input, text)
+            else:
+                data = quiz_generator.generate_quiz(creator_input)
+        except QuizGenerationError as e:
+            return Response({'error': str(e)}, status=400)
 
         if data != {}:
             serializer = QuizSerializer(

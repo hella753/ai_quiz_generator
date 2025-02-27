@@ -10,6 +10,7 @@ class FileProcessor:
         self.file = file
 
     def process_file(self):
+        text = ""
         if self.file.name.endswith(".docx") or self.file.name.endswith(".doc"):
             text = self.process_docx()
         if self.file.name.endswith(".pdf"):

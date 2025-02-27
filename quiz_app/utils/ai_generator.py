@@ -1,5 +1,5 @@
 import logging
-from typing import Type
+from typing import Type, Optional, Dict
 from decouple import config
 from django.utils.translation import gettext as _
 from openai import OpenAI
@@ -21,9 +21,20 @@ class QuizGenerator:
         self.__API_KEY = config('OPEN_AI_SECRET_KEY')
         self.__client = OpenAI(api_key=self.__API_KEY)
 
-    def use_ai(self, sys_prompt: str, prompt: str, response_format: Type[BaseModel]):
+    def use_ai(self,
+               sys_prompt: str,
+               prompt: str,
+               response_format: Type[BaseModel]) -> Optional[BaseModel]:
         """
         Use the AI model to generate a response.
+
+        :param sys_prompt: System prompt for the AI model.
+        :param prompt: User prompt for the AI model.
+        :param response_format: Pydantic model to parse the response.
+
+        :return: Parsed response from the AI model.
+
+        :raises QuizGenerationError: If the AI model fails to generate content.
         """
         try:
             completion = self.__client.beta.chat.completions.parse(
@@ -40,9 +51,16 @@ class QuizGenerator:
             logger.error(f"OpenAI API error: {str(e)}", exc_info=True)
             raise QuizGenerationError(f"Failed to generate content: {str(e)}")
 
-    def generate_quiz(self, prompt, file=None):
+    def generate_quiz(self, prompt: str, file: Optional[str] = None) -> Dict:
         """
         Generate a quiz using the AI model.
+
+        :param prompt: User prompt for the AI model.
+        :param file: File to use for generating questions.
+
+        :return: Parsed response from the AI model.
+
+        :raises QuizGenerationError: If the AI model fails to generate content.
         """
         sys_prompt = _("Please generate a quiz in the required format. Scores should be 1.00 by default."
                        "and if the question is open-ended the answers list should be empty.")
@@ -62,9 +80,15 @@ class QuizGenerator:
             logger.error(f"Quiz generation error: {str(e)}", exc_info=True)
             raise QuizGenerationError(f"Failed to generate quiz: {str(e)}")
 
-    def check_answers(self, prompt):
+    def check_answers(self, prompt: str) -> Dict:
         """
         Check the answers to a quiz using the AI model.
+
+        :param prompt: User prompt for the AI model.
+
+        :return: Parsed response from the AI model.
+
+        :raises QuizGenerationError: If the AI model fails to generate content.
         """
         sys_prompt = _("Evaluate quiz answers and return a JSON response.")
 

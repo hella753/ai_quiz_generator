@@ -26,47 +26,53 @@ class QuizViewSet(ModelViewSet):
                 "questions__answers"
     ).all()
 
+    permission_classes_map = {
+        "create": [IsAuthenticated()],
+        "list": [IsAuthenticated()],
+        "update": [IsCreater()],
+        "destroy": [IsCreater()],
+        "partial_update": [IsCreater()]
+    }
+
     def get_permissions(self):
-        for_users = ["create", "list"]
-        for_creators = ["update", "destroy", "partial_update"]
-        if self.action in for_users:
-            return [IsAuthenticated()]
-        if self.action in for_creators:
-            return [IsCreater()]
-        return super().get_permissions()
+        return self.permission_classes_map.get(self.action, super().get_permissions())
 
     def create(self, request, *args, **kwargs):
         file = request.FILES.get("file")
         creator_input = request.data.get("_input")
-        quiz_generator = QuizGenerator()
-
         try:
-            if file:
-                text = FileProcessor(file).process_file()
-                data = quiz_generator.generate_quiz(creator_input, text)
-            else:
-                data = quiz_generator.generate_quiz(creator_input)
+            data = self._generate_quiz_data(file, creator_input)
+            if not data:
+                return Response({}, status=status.HTTP_400_BAD_REQUEST)
+            return self._process_valid_quiz_data(data, request)
         except QuizGenerationError as e:
-            return Response({'error': str(e)}, status=400)
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
-        if data != {}:
-            serializer = QuizSerializer(
-                data=data,
-                context={"request": request}
-            )
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED,
-                headers=headers
-            )
-        return Response(
-            {},
-            status=status.HTTP_400_BAD_REQUEST
+    @staticmethod
+    def _generate_quiz_data(file, creator_input):
+        """
+        Generate quiz data based on file and/or creator input
+        """
+        quiz_generator = QuizGenerator()
+        text = FileProcessor(file).process_file() if file else None
+        return quiz_generator.generate_quiz(creator_input, text)
+
+    def _process_valid_quiz_data(self, data, request):
+        """
+        Process valid quiz data and return response
+        """
+        serializer = QuizSerializer(
+            data=data,
+            context={"request": request}
         )
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
 
+        return Response(
+            serializer.data,
+            status=status.HTTP_201_CREATED,
+            headers=self.get_success_headers(serializer.data)
+        )
 
 class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
     queryset = Quiz.objects.select_related('creator')

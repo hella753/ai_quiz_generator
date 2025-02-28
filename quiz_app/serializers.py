@@ -2,8 +2,8 @@ import re
 from django.db import transaction
 from rest_framework import serializers
 from exceptions import DanyTornikeException
-from quiz_app.utils.update_quiz import QuizUpdater
 from .models import *
+from .utils.quiz_modifier import QuizCreator, QuizUpdater
 
 
 class AnswerSerializer(serializers.ModelSerializer):
@@ -34,27 +34,14 @@ class QuizSerializer(serializers.ModelSerializer):
         """
         Create a quiz with questions and answers
         """
-        questions = validated_data.pop("questions")
-        creator = self.context.get("request").user
-        quiz = Quiz.objects.create(**validated_data, creator=creator)
-        for question in questions:
-            answers = question.pop("answers")
-            question_obj = Question.objects.create(**question, quiz=quiz)
-            answer_list = [
-                Answer(**answer, question=question_obj) for answer in answers
-            ]
-            Answer.objects.bulk_create(answer_list)
-            question_obj.answers.set(answer_list)
-            quiz.questions.add(question_obj)
-        return quiz
+        user = self.context.get("request").user
+        return QuizCreator(validated_data, user).create()
 
     def update(self, instance, validated_data):
         """
-        Update a quiz with questions and answers
+        Update a quiz and its related questions and answers.
         """
-        quiz_updater = QuizUpdater(instance, validated_data)
-        updated_instance = quiz_updater.handle_questions()
-        return updated_instance
+        return QuizUpdater(instance, validated_data).update()
 
 
 class InputSerializer(serializers.Serializer):

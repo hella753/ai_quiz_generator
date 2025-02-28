@@ -1,5 +1,5 @@
 from PyPDF2 import PdfReader
-from docx2txt import docx2txt
+from docx2txt import docx2txt  # type: ignore
 
 
 class FileProcessor:
@@ -12,12 +12,12 @@ class FileProcessor:
     def process_file(self):
         text = ""
         if self.file.name.endswith(".docx") or self.file.name.endswith(".doc"):
-            text = self.process_docx()
+            text = self._process_docx()
         if self.file.name.endswith(".pdf"):
-            text = self.process_pdfs()
+            text = self._process_pdfs()
         return text
 
-    def process_docx(self):
+    def _process_docx(self):
         """
         Process docx files
         :return: text extracted from docx files
@@ -25,10 +25,10 @@ class FileProcessor:
         text = docx2txt.process(self.file)
         return text
 
-    def process_pdfs(self):
+    def _process_pdfs(self):
         """
-        Process pdf files
-        :return: text extracted from pdf files
+        Process PDF files
+        :return: text extracted from PDF files
         """
         text = ""
         reader = PdfReader(self.file)

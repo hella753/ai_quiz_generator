@@ -1,6 +1,6 @@
 import logging
 from typing import Type, Optional, Dict
-from decouple import config
+from decouple import config  # type: ignore
 from django.utils.translation import gettext as _
 from openai import OpenAI
 from pydantic import BaseModel
@@ -62,8 +62,10 @@ class QuizGenerator:
 
         :raises QuizGenerationError: If the AI model fails to generate content.
         """
-        sys_prompt = _("Please generate a quiz in the required format. Scores should be 1.00 by default."
-                       "and if the question is open-ended the answers list should be empty.")
+        sys_prompt = _("Please generate a quiz in the required format. "
+                       "Scores should be 1.00 by default. "
+                       "if the question is open-ended, "
+                       "the answers list should be empty.")
 
         if file is not None:
             sys_prompt += f"Use this text for generating questions {file}"
@@ -96,7 +98,9 @@ class QuizGenerator:
             raw_response = self.use_ai(sys_prompt, prompt, QuizAnswers)
 
             if not raw_response:
-                raise QuizGenerationError("Received empty response from answer evaluation")
+                raise QuizGenerationError(
+                    "Received empty response from answer evaluation"
+                )
 
             return raw_response.model_dump()
 

@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Type
+from typing import Dict
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -9,6 +9,7 @@ from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
 from user.serializers import QuizScoreSerializer
 from .exceptions import QuizGenerationError
+from .utils.filtersets import QuizFilter
 from .utils.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
 from .utils.ai_generator import QuizGenerator
@@ -38,6 +39,7 @@ class QuizViewSet(ModelViewSet):
                 "questions",
                 "questions__answers"
     ).all()
+    filterset_class = QuizFilter
 
     permission_classes_map = {
         "create": [IsAuthenticated()],

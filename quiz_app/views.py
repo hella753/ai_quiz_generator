@@ -65,8 +65,6 @@ class QuizViewSet(ModelViewSet):
         :param kwargs: keyword arguments.
 
         :return: Response object.
-
-        :raises QuizGenerationError: If the quiz generation fails.
         """
         # If the request contains a file, it will be processed
         # and quiz data will be generated based on the file.

@@ -62,6 +62,8 @@ class QuizDataProcessor:
         Process quiz data and create a quiz instance.
 
         :return: Tuple containing response data, status code and headers.
+
+        :raises QuizGenerationError: If the quiz generation fails.
         """
         try:
             if not self.quiz_data:

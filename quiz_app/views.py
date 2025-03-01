@@ -1,22 +1,18 @@
 import json
-from typing import Dict
-from django.core.files.uploadedfile import InMemoryUploadedFile
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
 from user.serializers import QuizScoreSerializer
-from .exceptions import QuizGenerationError
 from .utils.filtersets import QuizFilter
-from .utils.serializer_utils import SerializerFactory
+from quiz_app.utils.helpers.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
 from .utils.ai_generator import QuizGenerator
-from .utils.file_processor import FileProcessor
-from .utils.email_sender import EmailSender
+from quiz_app.utils.helpers.email_sender import EmailSender
 from .permissions import IsCreater
 from .serializers import *
+from .utils.services import QuizGenerationService, QuizDataProcessor
 
 
 class QuizViewSet(ModelViewSet):
@@ -75,60 +71,17 @@ class QuizViewSet(ModelViewSet):
         # If the request contains a file, it will be processed
         # and quiz data will be generated based on the file.
         file = request.FILES.get("file")
-
         creator_input = request.data.get("_input")
-        try:
-            data = self._generate_quiz_data(file, creator_input)
-            if not data:
-                return Response(
-                    {},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            return self._process_valid_quiz_data(data, request)
-        except QuizGenerationError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
-    @staticmethod
-    def _generate_quiz_data(file: InMemoryUploadedFile,
-                            creator_input: str) -> Dict:
-        """
-        Generate quiz data based on file and/or creator input.
+        quiz_service = QuizGenerationService()
+        if file:
+            quiz_data = quiz_service.generate_quiz_from_file(file, creator_input)
+        else:
+            quiz_data = quiz_service.generate_quiz_data(creator_input)
 
-        :param file: File to use for quiz generation.
-        :param creator_input: User input for quiz generation.
-
-        :return: Quiz data.
-        """
-        quiz_generator = QuizGenerator()
-        text = FileProcessor(file).process_file() if file else None
-        return quiz_generator.generate_quiz(creator_input, text)
-
-    def _process_valid_quiz_data(self,
-                                 data: Dict,
-                                 request: Request) -> Response:
-        """
-        Process valid quiz data and return response.
-
-        :param data: Quiz data.
-        :param request: Request object.
-
-        :return: Response object.
-        """
-        serializer = QuizSerializer(
-            data=data,
-            context={"request": request}
-        )
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=self.get_success_headers(serializer.data)
-        )
+        data_processor = QuizDataProcessor(quiz_data, request, self)
+        data, status_code, headers = data_processor.process_quiz_data()
+        return Response(data, status=status_code, headers=headers)
 
 
 class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):

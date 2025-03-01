@@ -10,7 +10,7 @@ from rest_framework.decorators import action
 from quiz_app.permissions import IsThisUser, IsCreater, CanSeeAnalysis
 from quiz_app.utils.paginators import CustomPaginator
 from quiz_app.utils import SerializerFactory
-from quiz_app.utils.email_sender import EmailSender
+from quiz_app.utils.helpers.email_sender import EmailSender
 from .serializers import *
 
 

@@ -5,17 +5,28 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
 from user.serializers import QuizScoreSerializer
-from .utils.serializer_utils import SerializerFactory
+from .utils.filtersets import QuizFilter
+from quiz_app.utils.helpers.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
 from .utils.ai_generator import QuizGenerator
-from .utils.file_processor import FileProcessor
-from .utils.email_sender import EmailSender
+from quiz_app.utils.helpers.email_sender import EmailSender
 from .permissions import IsCreater
 from .serializers import *
+from .utils.services import QuizGenerationService, QuizDataProcessor
 
 
 class QuizViewSet(ModelViewSet):
-    serializer_class = SerializerFactory(
+    """
+    ViewSet for a Quiz model.
+
+    create: Create, save and return a new quiz instance.
+    list: Returns a list of all quiz instances.
+    retrieve: Returns the specified quiz instance.
+    update: Updates and returns the specified quiz instance.
+    destroy: Deletes the specified quiz instance.
+    partial_update: Partially updates the specified quiz instance.
+    """
+    serializer_class = SerializerFactory(  # type: ignore
         create=InputSerializer,
         default=QuizSerializer
     )
@@ -24,44 +35,51 @@ class QuizViewSet(ModelViewSet):
                 "questions",
                 "questions__answers"
     ).all()
+    filterset_class = QuizFilter
+
+    permission_classes_map = {
+        "create": [IsAuthenticated()],
+        "list": [IsAuthenticated()],
+        "update": [IsCreater()],
+        "destroy": [IsCreater()],
+        "partial_update": [IsCreater()]
+    }
 
     def get_permissions(self):
-        for_users = ["create", "list"]
-        for_creators = ["update", "destroy", "partial_update"]
-        if self.action in for_users:
-            return [IsAuthenticated()]
-        if self.action in for_creators:
-            return [IsCreater()]
-        return super().get_permissions()
+        """
+        Get permissions based on action.
+
+        :return: List of permissions.
+        """
+        return self.permission_classes_map.get(
+            self.action,
+            super().get_permissions()
+        )
 
     def create(self, request, *args, **kwargs):
+        """
+        Quiz creation endpoint.
+
+        :param request: Request object.
+        :param args: arguments.
+        :param kwargs: keyword arguments.
+
+        :return: Response object.
+        """
+        # If the request contains a file, it will be processed
+        # and quiz data will be generated based on the file.
         file = request.FILES.get("file")
         creator_input = request.data.get("_input")
-        quiz_generator = QuizGenerator()
 
+        quiz_service = QuizGenerationService()
         if file:
-            text = FileProcessor(file).process_file()
-            data = quiz_generator.generate_quiz(creator_input, text)
+            quiz_data = quiz_service.generate_quiz_from_file(file, creator_input)
         else:
-            data = quiz_generator.generate_quiz(creator_input)
+            quiz_data = quiz_service.generate_quiz_data(creator_input)
 
-        if data != {}:
-            serializer = QuizSerializer(
-                data=data,
-                context={"request": request}
-            )
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            headers = self.get_success_headers(serializer.data)
-            return Response(
-                serializer.data,
-                status=status.HTTP_201_CREATED,
-                headers=headers
-            )
-        return Response(
-            {},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        data_processor = QuizDataProcessor(quiz_data, request, self)
+        data, status_code, headers = data_processor.process_quiz_data()
+        return Response(data, status=status_code, headers=headers)
 
 
 class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):

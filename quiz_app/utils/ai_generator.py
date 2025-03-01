@@ -1,7 +1,15 @@
-import json
-from decouple import config
-from openai import OpenAI
+import logging
+from typing import Type, Optional, Dict
+from decouple import config  # type: ignore
 from django.utils.translation import gettext as _
+from openai import OpenAI
+from pydantic import BaseModel
+
+from quiz_app.exceptions import QuizGenerationError
+from quiz_app.utils.pydantic_models import Quiz
+from quiz_app.utils.pydantic_models import QuizAnswers
+
+logger = logging.getLogger(__name__)
 
 
 class QuizGenerator:
@@ -9,48 +17,93 @@ class QuizGenerator:
     This class is used to generate quiz questions and
     check answers using OpenAI API.
     """
-
     def __init__(self):
-        self.__API_KEY = config('SECRET_KEY')
+        self.__API_KEY = config('OPEN_AI_SECRET_KEY')
         self.__client = OpenAI(api_key=self.__API_KEY)
 
-    def use_ai(self, sys_prompt, prompt):
-        completion = self.__client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.8
-        )
-        response = completion.choices[0].message.content
-        data = json.loads(response)
-        return data
+    def use_ai(self,
+               sys_prompt: str,
+               prompt: str,
+               response_format: Type[BaseModel]) -> Optional[BaseModel]:
+        """
+        Use the AI model to generate a response.
 
-    def generate_quiz(self, prompt, file=None):
-        sys_prompt = _("return JSON object. structure: 'name', 'questions' "
-                       "should have nested 'question', 'score': 1.00 "
-                       "and 'answers' list. If quiz is multiple choice: "
-                       "'answers' should have 'answer', 'correct': bool "
-                       "If questions are open 'answers' should be "
-                       "an empty list. Dont Write anything rather then "
-                       "just object. not even json in the beginning. "
-                       "If user says that he needs more than 10 "
-                       "questions dont generate anything.")
+        :param sys_prompt: System prompt for the AI model.
+        :param prompt: User prompt for the AI model.
+        :param response_format: Pydantic model to parse the response.
+
+        :return: Parsed response from the AI model.
+
+        :raises QuizGenerationError: If the AI model fails to generate content.
+        """
+        try:
+            completion = self.__client.beta.chat.completions.parse(
+                model="gpt-4o-mini",
+                messages=[
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                response_format=response_format,
+                temperature=0.8,
+            )
+            return completion.choices[0].message.parsed
+        except Exception as e:
+            logger.error(f"OpenAI API error: {str(e)}", exc_info=True)
+            raise QuizGenerationError(f"Failed to generate content: {str(e)}")
+
+    def generate_quiz(self, prompt: str, file: Optional[str] = None) -> Dict:
+        """
+        Generate a quiz using the AI model.
+
+        :param prompt: User prompt for the AI model.
+        :param file: File to use for generating questions.
+
+        :return: Parsed response from the AI model.
+
+        :raises QuizGenerationError: If the AI model fails to generate content.
+        """
+        sys_prompt = _("Please generate a quiz in the required format. "
+                       "Scores should be 1.00 by default. "
+                       "if the question is open-ended, "
+                       "the answers list should be empty.")
+
         if file is not None:
             sys_prompt += f"Use this text for generating questions {file}"
-        data = self.use_ai(sys_prompt, prompt)
-        return data
 
-    def check_answers(self, prompt):
-        sys_prompt = _("Checking quiz answers. You'll be given questions, answers, "
-                       "question_id and question_score. DO NOT TOUCH THE QUESTION_ID! "
-                       "Return the response in JSON format with fields: \"answers\" "
-                       "field which will have these nested "
-                       "fields: question_id, answer, explanation(short, only one sentence, "
-                       "max 2. If the answer is correct, leave the explanation field empty.), "
-                       "and correct(True or False). After the answers field, I also want a "
-                       "user_total_score field which should be the sum of the "
-                       "questions score which are correct. Dont Write anything rather "
-                       "then just object. not even json in the beginning.")
-        return self.use_ai(sys_prompt, prompt)
+        try:
+            raw_response = self.use_ai(sys_prompt, prompt, Quiz)
+
+            if not raw_response:
+                raise QuizGenerationError("Received empty response from AI")
+
+            return raw_response.model_dump()
+
+        except Exception as e:
+            logger.error(f"Quiz generation error: {str(e)}", exc_info=True)
+            raise QuizGenerationError(f"Failed to generate quiz: {str(e)}")
+
+    def check_answers(self, prompt: str) -> Dict:
+        """
+        Check the answers to a quiz using the AI model.
+
+        :param prompt: User prompt for the AI model.
+
+        :return: Parsed response from the AI model.
+
+        :raises QuizGenerationError: If the AI model fails to generate content.
+        """
+        sys_prompt = _("Evaluate quiz answers and return a JSON response.")
+
+        try:
+            raw_response = self.use_ai(sys_prompt, prompt, QuizAnswers)
+
+            if not raw_response:
+                raise QuizGenerationError(
+                    "Received empty response from answer evaluation"
+                )
+
+            return raw_response.model_dump()
+
+        except Exception as e:
+            logger.error(f"Answer checking error: {str(e)}", exc_info=True)
+            raise QuizGenerationError(f"Failed to check answers: {str(e)}")

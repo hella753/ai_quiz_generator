@@ -6,7 +6,7 @@ class SerializerGetter:
         self.default = default
         self.serializer_per_action = kwargs
 
-    def get_serializer_class(self, view: [APIView]):
+    def get_serializer_class(self, view: APIView):
         return self.serializer_per_action.get(
             getattr(view, 'action', None),
             self.default

@@ -7,3 +7,4 @@ user/__pycache__/
 user/migrations/__pycache__/
 .venv/
 .env
+mypy.ini

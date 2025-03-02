@@ -11,4 +11,8 @@ router.register(r'created-quiz', CreatedQuizViewSet, basename='created-quiz')
 
 urlpatterns = router.urls
 
-urlpatterns += [path('verify-account/<uuid:token>/', verify_account_view, name='verify-account')]
+urlpatterns += [
+
+    path('verify-account/<uuid:token>/', verify_account_view, name='verify-account'),
+    path('change-password/', ChangePasswordView.as_view(), name='change-password')
+]

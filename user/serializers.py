@@ -6,12 +6,14 @@ from exceptions import DanyTornikeException
 from quiz_app.models import Question, Quiz, UserAnswer, QuizScore
 from quiz_app.serializers import AnswerSerializer
 from .models import *
+from django.contrib.auth.password_validation import validate_password
 
 
 class RegistrationSerializer(ModelSerializer):
     """
     Serializer for registration
     """
+
     class Meta:
         model = User
         fields = ["id", "username", "email", "password"]
@@ -72,6 +74,7 @@ class QuizScoreSerializer(serializers.ModelSerializer):
     """
     Purpose of this serializer is to create and validate quiz scores.
     """
+
     class Meta:
         model = QuizScore
         exclude = ["user", "guest"]
@@ -112,6 +115,7 @@ class QuizForCreatorSerializer(serializers.ModelSerializer):
     """
     Serializer for quiz for creator personal account
     """
+
     class Meta:
         model = Quiz
         exclude = ["created_at", "updated_at"]
@@ -144,3 +148,19 @@ class QuizAnalysisSerializer(serializers.Serializer):
     count_of_users_who_took_quiz = serializers.IntegerField()
     correct_percentage = serializers.FloatField()
     hardest_questions = HardestQuestionSerializer(many=True)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    password = serializers.CharField(max_length=128, write_only=True)
+    new_password = serializers.CharField(max_length=128, write_only=True, validators=[validate_password])
+    confirm_password = serializers.CharField(max_length=128, write_only=True)
+
+    def validate(self, attrs):
+        user = self.context['request'].user
+
+        if not user.check_password(attrs['password']):
+            raise serializers.ValidationError({"password": "Incorrect Password"})
+
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "New passwords do not match"})
+        return attrs

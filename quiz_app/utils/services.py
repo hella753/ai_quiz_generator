@@ -43,19 +43,42 @@ class QuizDataProcessor:
     Service for processing quiz data.
     """
     def __init__(self,
-                 quiz_data: dict,
                  request: Request,
                  view_instance: ModelViewSet) -> None:
         """
         Initialize the service.
 
-        :param quiz_data: Quiz data.
         :param request: Request an object.
         :param view_instance: QuizViewSet instance.
         """
-        self.quiz_data = quiz_data
         self.request = request
         self.view_instance = view_instance
+        self.quiz_data = self._get_quiz_data()
+
+    def _get_quiz_data(self) -> dict:
+        """
+        Get quiz data from the request.
+
+        :return: Quiz data.
+        """
+        # If the request contains a file, it will be processed
+        # and quiz data will be generated based on the file.
+        file = self.request.FILES.get("file")
+
+        topic = self.request.data.get("topic")
+        number_of_questions = self.request.data.get("number_of_questions")
+        type_of_questions = self.request.data.get("type_of_questions")
+
+        creator_input = (f"Generate a quiz with {number_of_questions} "
+                         f"{type_of_questions} questions about {topic}")
+
+        quiz_service = QuizGenerationService()
+        try:
+            if file:
+                return quiz_service.generate_quiz_from_file(file, creator_input)
+            return quiz_service.generate_quiz_data(creator_input)
+        except QuizGenerationError as e:
+            return {'error': str(e), 'status': status.HTTP_400_BAD_REQUEST}
 
     def process_quiz_data(self) -> tuple:
         """
@@ -66,6 +89,8 @@ class QuizDataProcessor:
         :raises QuizGenerationError: If the quiz generation fails.
         """
         try:
+            if 'error' in self.quiz_data:
+                return self.quiz_data, self.quiz_data['status'], None
             if not self.quiz_data:
                 return {}, status.HTTP_400_BAD_REQUEST, None
             return self._create_quiz()

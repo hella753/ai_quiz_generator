@@ -1,3 +1,6 @@
+import uuid
+from datetime import timedelta
+
 from django.utils import timezone
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, AnonymousUser
@@ -19,8 +22,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     )
     email = models.EmailField(
         max_length=50,
-        blank=True,
-        null=True,
+        unique=True,
         verbose_name=_("email")
     )
     date_joined = models.DateTimeField(
@@ -56,3 +58,18 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.username}"
+
+
+class VerificationToken(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    token = models.UUIDField(default=uuid.uuid4, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        if not self.expires_at:
+            self.expires_at = timezone.now() + timedelta(days=2)
+        super().save(*args, **kwargs)
+
+    def is_valid(self):
+        return timezone.now() <= self.expires_at

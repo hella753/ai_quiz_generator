@@ -30,24 +30,31 @@ class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        message = (
-            f"Greetings and welcome to AI quiz maker! "
-            f"We are delighted to see you as a part "
-            f"of our community. Feel free to discover, "
-            f"interact, and collaborate with us to create "
-            f"something wonderful."
-        )
+        user.is_active = False
+        user.save()
+        token = VerificationToken.objects.create(user=user)
+        self.send_verification_mail(user, token)
+
+    def send_verification_mail(self, user, token):
+        verification_url = f"{self.request.build_absolute_uri('/')[:-1]}/accounts/verify-account/{token.token}/"
+        subject = "Account Verification"
+        message = f"""
+        Hi, {user.username},
+
+        Please verify your account by clicking on the link below:
+        {verification_url}
+
+        This link will expire in 48 hours.
+
+        Regards,
+        Team Interpredators
+        """
 
         EmailSender(
-            f"Welcome To AI Quiz Generator {user.username}",
-            message,
-            [user.email]
+            subject=subject,
+            message=message,
+            to=[user.email]
         ).send_email()
-
-        if user:
-            login(self.request, user)
-        else:
-            return super().perform_create(serializer)
 
 
 class TakenQuizViewSet(ReadOnlyModelViewSet):
@@ -142,3 +149,23 @@ class CreatedQuizViewSet(
         }
 
         return Response(analytics_data, status=status.HTTP_200_OK)
+
+
+def verify_account_view(request, token):
+    try:
+        verification_token = VerificationToken.objects.get(token=token)
+
+        if not verification_token.is_valid():
+            return HttpResponse("<h1>Verification Failed</h1><p>Verification link has expired.</p>")
+
+        user = verification_token.user
+        user.is_active = True
+        user.save()
+
+        verification_token.delete()
+
+        return HttpResponse(
+            "<h1>Account Verified</h1><p>Your account has been successfully verified. You can now log in to the application.</p>")
+
+    except VerificationToken.DoesNotExist:
+        return HttpResponse("<h1>Verification Failed</h1><p>Invalid verification token.</p>")

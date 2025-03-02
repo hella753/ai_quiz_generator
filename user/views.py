@@ -23,11 +23,11 @@ class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
     pagination_class = CustomPaginator
     queryset = User.objects.all()
 
-    def get_permissions(self):
-        if self.action != "create":
-            return [IsAuthenticated()]
-        else:
-            return []
+    # def get_permissions(self):
+    #     if self.action != "create":
+    #         return [IsAuthenticated()]
+    #     else:
+    #         return []
 
     def perform_create(self, serializer):
         user = serializer.save()

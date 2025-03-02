@@ -1,10 +1,9 @@
-from django.contrib.auth import login
 from django.db.models import OuterRef
 from django.shortcuts import get_object_or_404
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import GenericViewSet
+from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework import status
 from rest_framework.decorators import action
 from quiz_app.permissions import IsThisUser, IsCreater, CanSeeAnalysis
@@ -58,36 +57,28 @@ class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
             to=[user.email]
         ).send_email()
 
-class TakenQuizViewSet(GenericViewSet, RetrieveModelMixin):
+
+class TakenQuizViewSet(ReadOnlyModelViewSet):
     """
     This ViewSet is responsible for getting the quizzes taken by the user.
     """
     serializer_class = UserQuizSerializer
-    permission_classes = [IsThisUser]
-    queryset = User.objects.all()
-    lookup_field = "questions__your_answers__user__username"
+    pagination_class = CustomPaginator
+    permission_classes = [IsAuthenticated]
 
-    def retrieve(self, request, *args, **kwargs):
-        user_object = User.objects.filter(
-            username=kwargs[self.lookup_field]
-        ).first()
-        self.check_object_permissions(self.request, user_object)
-        qs = (
-            Quiz.objects.select_related("creator")
-            .prefetch_related("questions__your_answers", "questions__answers")
-            .filter(questions__your_answers__user=request.user)
-            .distinct()
-            .annotate(
-                your_score=QuizScore.objects.filter(
-                    quiz=OuterRef("pk"), user=request.user
-                ).values("score"))
+    def get_queryset(self):
+        """
+        This method is responsible for getting the quizzes
+        with scores taken by the user.
+        """
+        queryset = Quiz.objects.filter(
+            questions__your_answers__user=self.request.user
+        ).distinct().annotate(
+            your_score=QuizScore.objects.filter(
+                quiz=OuterRef("pk"), user=self.request.user
+            ).values("score")
         )
-        serializer = UserQuizSerializer(
-            qs,
-            many=True,
-            context={"request": request}
-        )
-        return Response(serializer.data)
+        return queryset
 
 
 class CreatedQuizViewSet(

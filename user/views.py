@@ -1,3 +1,4 @@
+from django.contrib.auth import login
 from django.db.models import OuterRef
 from django.shortcuts import get_object_or_404
 from rest_framework.mixins import *
@@ -11,8 +12,6 @@ from quiz_app.utils.paginators import CustomPaginator
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.helpers.email_sender import EmailSender
 from .serializers import *
-from django.http import HttpResponse
-from .models import VerificationToken
 
 
 class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
@@ -31,7 +30,7 @@ class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
 
     def perform_create(self, serializer):
         user = serializer.save()
-        user.is_active=False
+        user.is_active = False
         user.save()
         token = VerificationToken.objects.create(user=user)
         self.send_verification_mail(user, token)
@@ -41,12 +40,12 @@ class CreateUserViewSet(CreateModelMixin, GenericViewSet, ListModelMixin):
         subject = "Account Verification"
         message = f"""
         Hi, {user.username},
-        
+
         Please verify your account by clicking on the link below:
         {verification_url}
-    
+
         This link will expire in 48 hours.
-    
+
         Regards,
         Team Interpredators
         """
@@ -82,9 +81,9 @@ class TakenQuizViewSet(ReadOnlyModelViewSet):
 
 
 class CreatedQuizViewSet(
-    RetrieveModelMixin,
-    ListModelMixin,
-    GenericViewSet
+        RetrieveModelMixin,
+        ListModelMixin,
+        GenericViewSet
 ):
     """
     This ViewSet is responsible for getting quizzes created by the user.
@@ -132,13 +131,13 @@ class CreatedQuizViewSet(
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=["get"], url_path="analytics", permission_classes=[IsCreater], )
+    @action(detail=True,methods=["get"],url_path="analytics",permission_classes=[IsCreater],)
     def analytics(self, request, pk=None):
         """
         This action is responsible for getting the analytics of the quiz.
         """
         quiz = get_object_or_404(Quiz, pk=pk, creator=request.user)
-
+        
         total_users = (UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id))
         correct_percentage = (UserAnswer.objects.get_correct_percentage(quiz.id))
         hardest_questions = (UserAnswer.objects.get_hardest_questions(quiz.id))

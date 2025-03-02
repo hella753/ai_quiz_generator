@@ -48,8 +48,30 @@ class InputSerializer(serializers.Serializer):
     """
     Serializer for quiz generating input data
     """
-    _input = serializers.CharField(max_length=150)
+    type_of_questions = serializers.ChoiceField(
+        choices=["multiple choice", "open"],
+    )
+    number_of_questions = serializers.IntegerField()
+    topic = serializers.CharField(max_length=150)
     file = serializers.FileField(required=False)
+
+    def validate(self, data):
+        """
+        Validate the input data
+        """
+        number_of_questions = int(data.get("number_of_questions"))
+        type_of_questions = data.get("type_of_questions")
+
+        if number_of_questions > 10 or number_of_questions < 1:
+            raise serializers.ValidationError(
+                "Number of questions should be greater than 0 and less than 10"
+            )
+
+        if type_of_questions not in ["multiple choice", "open"]:
+            raise serializers.ValidationError(
+                "Type of quiz should be either multiple choice or open"
+            )
+        return data
 
 
 class AnswerCheckerSerializer(serializers.Serializer):

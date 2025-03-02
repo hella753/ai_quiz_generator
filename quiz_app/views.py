@@ -5,14 +5,13 @@ from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
 from user.serializers import QuizScoreSerializer
-from .utils.filtersets import QuizFilter
 from quiz_app.utils.helpers.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
 from .utils.ai_generator import QuizGenerator
 from quiz_app.utils.helpers.email_sender import EmailSender
 from .permissions import IsCreater
 from .serializers import *
-from .utils.services import QuizGenerationService, QuizDataProcessor
+from .utils.services import QuizDataProcessor
 
 
 class QuizViewSet(ModelViewSet):
@@ -35,7 +34,6 @@ class QuizViewSet(ModelViewSet):
                 "questions",
                 "questions__answers"
     ).all()
-    filterset_class = QuizFilter
 
     permission_classes_map = {
         "create": [IsAuthenticated()],
@@ -66,18 +64,10 @@ class QuizViewSet(ModelViewSet):
 
         :return: Response object.
         """
-        # If the request contains a file, it will be processed
-        # and quiz data will be generated based on the file.
-        file = request.FILES.get("file")
-        creator_input = request.data.get("_input")
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        quiz_service = QuizGenerationService()
-        if file:
-            quiz_data = quiz_service.generate_quiz_from_file(file, creator_input)
-        else:
-            quiz_data = quiz_service.generate_quiz_data(creator_input)
-
-        data_processor = QuizDataProcessor(quiz_data, request, self)
+        data_processor = QuizDataProcessor(request, self)
         data, status_code, headers = data_processor.process_quiz_data()
         return Response(data, status=status_code, headers=headers)
 

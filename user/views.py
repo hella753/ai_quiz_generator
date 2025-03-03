@@ -2,9 +2,11 @@ from django.contrib.auth import login
 from django.db.models import OuterRef
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from rest_framework.generics import UpdateAPIView
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework import status
 from rest_framework.decorators import action
@@ -82,9 +84,9 @@ class TakenQuizViewSet(ReadOnlyModelViewSet):
 
 
 class CreatedQuizViewSet(
-        RetrieveModelMixin,
-        ListModelMixin,
-        GenericViewSet
+    RetrieveModelMixin,
+    ListModelMixin,
+    GenericViewSet
 ):
     """
     This ViewSet is responsible for getting quizzes created by the user.
@@ -132,13 +134,13 @@ class CreatedQuizViewSet(
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True,methods=["get"],url_path="analytics",permission_classes=[IsCreater],)
+    @action(detail=True, methods=["get"], url_path="analytics", permission_classes=[IsCreater], )
     def analytics(self, request, pk=None):
         """
         This action is responsible for getting the analytics of the quiz.
         """
         quiz = get_object_or_404(Quiz, pk=pk, creator=request.user)
-        
+
         total_users = (UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id))
         correct_percentage = (UserAnswer.objects.get_correct_percentage(quiz.id))
         hardest_questions = (UserAnswer.objects.get_hardest_questions(quiz.id))
@@ -170,3 +172,23 @@ def verify_account_view(request, token):
 
     except VerificationToken.DoesNotExist:
         return HttpResponse("<h1>Verification Failed</h1><p>Invalid verification token.</p>")
+
+
+class ChangePasswordView(UpdateAPIView):
+    serializer_class = ChangePasswordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data, context={"request": request})
+
+        if serializer.is_valid():
+            user = self.get_object()
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+
+            return Response({"message": "Password changed successfully"}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

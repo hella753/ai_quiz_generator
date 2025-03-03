@@ -29,12 +29,18 @@ class RegistrationSerializer(ModelSerializer):
 
     def validate(self, data):
         """
-        Raise Custom Exception if username is tornike
+        Validate the password and raise the
+        Custom Exception if the username is tornike.
         """
         username = data.get("username")
+        password = data.get("password")
+
         normalized_username = re.sub(r"[^a-zA-Z]", "", username).lower()
         if normalized_username == "tornike":
             raise DanyTornikeException()
+
+        if password:
+            validate_password(password)
         return super().validate(data)
 
 
@@ -151,8 +157,13 @@ class QuizAnalysisSerializer(serializers.Serializer):
 
 
 class ChangePasswordSerializer(serializers.Serializer):
+    """
+    Serializer for changing password of the user.
+    """
     password = serializers.CharField(max_length=128, write_only=True)
-    new_password = serializers.CharField(max_length=128, write_only=True, validators=[validate_password])
+    new_password = serializers.CharField(max_length=128,
+                                         write_only=True,
+                                         validators=[validate_password])
     confirm_password = serializers.CharField(max_length=128, write_only=True)
 
     def validate(self, attrs):

@@ -5,7 +5,7 @@ from django.urls import path
 
 app_name="user"
 router = DefaultRouter()
-router.register(r'create-user', CreateUserViewSet, basename='create-user')
+router.register(r'user', UserViewSet, basename='user')
 router.register(r'taken-quiz', TakenQuizViewSet, basename='taken-quiz')
 router.register(r'created-quiz', CreatedQuizViewSet, basename='created-quiz')
 

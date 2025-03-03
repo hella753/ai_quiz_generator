@@ -7,17 +7,35 @@ class UserAnswerManager(models.Manager):
     Custom manager for UserAnswer model
     """
     def get_count_of_users_who_took_quiz(self, quiz_id):
-        return (
-            self.filter(question__quiz__id=quiz_id)
-            .values('user','guest')
-            .distinct()
-            .count()
-        )
+        """
+        Get the count of users who took the quiz
+
+        :param quiz_id: ID of the quiz
+
+        :return: Count of users who took the quiz
+        """
+        distinct_users = self.filter(
+            question__quiz__id=quiz_id
+        ).values(
+            'user','guest'
+        ).distinct()
+        return distinct_users.count()
 
     def get_correct_percentage(self, quiz_id):
+        """
+        Get the percentage of users who answered all questions correctly
+
+        :param quiz_id: ID of the quiz
+
+        :return: Percentage of users who answered all questions correctly
+        """
+        # TODO
+        # This is wrong.
         total_users = self.get_count_of_users_who_took_quiz(quiz_id)
+
         if total_users == 0:
             return 0.0
+
         all_correct_count = self.filter(
             question__quiz__id=quiz_id,
             correct=True
@@ -25,6 +43,15 @@ class UserAnswerManager(models.Manager):
         return (all_correct_count / total_users) * 100
 
     def get_hardest_questions(self, quiz_id):
+        """
+        Get the hardest questions in the quiz
+
+        :param quiz_id: ID of the quiz
+
+        :return: List of hardest questions
+        """
+        # TODO
+        # Test and fix this if necessary
         questions = self.filter(question__quiz__id=quiz_id) \
                         .values('question__question') \
                         .annotate(
@@ -51,9 +78,11 @@ class UserAnswerManager(models.Manager):
 
 class QuizManager(models.Manager):
     """
-    Custom manager for Quiz model
+    Custom manager for a Quiz model
     """
-    def get_count_of_who_took_this_quiz(self, quiz):
+
+    @staticmethod
+    def get_count_of_who_took_this_quiz(quiz):
         from .models import UserAnswer
         return (
             UserAnswer.objects.filter(question__quiz=quiz)
@@ -62,7 +91,10 @@ class QuizManager(models.Manager):
             .count()
         )
 
-    def get_users_who_took_this_quiz(self, quiz):
+    @staticmethod
+    def get_users_who_took_this_quiz(quiz):
+        # TODO
+        # Test and fix this if necessary
         from .models import UserAnswer
 
         user_answers = (
@@ -86,7 +118,7 @@ class QuizManager(models.Manager):
                     },
                     "answers": []
             }
-        
+
             users[participant_key]["answers"].append({
                 "question_id": user_answer.question.id,
                 "answer": user_answer.answer,

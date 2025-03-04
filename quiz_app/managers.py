@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Case, When,Count, F
+from django.db.models import Case, When, Count, F, Sum, IntegerField
 
 
 class UserAnswerManager(models.Manager):
@@ -17,32 +17,11 @@ class UserAnswerManager(models.Manager):
         distinct_users = self.filter(
             question__quiz__id=quiz_id
         ).values(
-            'user','guest'
+            'user', 'guest'
         ).distinct()
         return distinct_users.count()
 
-    def get_correct_percentage(self, quiz_id):
-        """
-        Get the percentage of users who answered all questions correctly
-
-        :param quiz_id: ID of the quiz
-
-        :return: Percentage of users who answered all questions correctly
-        """
-        # TODO
-        # This is wrong.
-        total_users = self.get_count_of_users_who_took_quiz(quiz_id)
-
-        if total_users == 0:
-            return 0.0
-
-        all_correct_count = self.filter(
-            question__quiz__id=quiz_id,
-            correct=True
-        ).values('user','guest').distinct().count()
-        return (all_correct_count / total_users) * 100
-
-    def get_hardest_questions(self, quiz_id):
+    def get_hardest_questions(self, quiz_id) :
         """
         Get the hardest questions in the quiz
 
@@ -50,30 +29,25 @@ class UserAnswerManager(models.Manager):
 
         :return: List of hardest questions
         """
-        # TODO
-        # Test and fix this if necessary
-        questions = self.filter(question__quiz__id=quiz_id) \
-                        .values('question__question') \
-                        .annotate(
-                            incorrect_count=Count(
-                                Case(When(correct=False, then=1))
-                            ),
-                            total_answers=Count('id'),
-                            incorrect_percentage=F(
-                                'incorrect_count'
-                            ) * 100.0 / F(
-                                'total_answers'
-                            )
-                        ) \
-                        .order_by('-incorrect_percentage')
-
-        hardest_questions = []
-        for question in questions:
-            hardest_questions.append({
-                'question': question['question__question'],
-                'percentage_incorrect': question['incorrect_percentage']
-            })
-        return hardest_questions
+        quiz_answers = self.filter(question__quiz__id=quiz_id).values(
+            "question__question"
+        ).annotate(
+            total_answers=Count('id'),
+            incorrect_count=Sum(Case(
+                When(correct=False, then=1),
+                default=0,
+                output_field=IntegerField()
+            )),
+            incorrect_percentage=(
+                    F('incorrect_count') * 100.0 / F('total_answers')
+            )
+        ).order_by(
+            "-incorrect_percentage"
+        ).values(
+            'question__question',
+            'incorrect_percentage'
+        )
+        return quiz_answers
 
 
 class QuizManager(models.Manager):
@@ -82,19 +56,9 @@ class QuizManager(models.Manager):
     """
 
     @staticmethod
-    def get_count_of_who_took_this_quiz(quiz):
-        from .models import UserAnswer
-        return (
-            UserAnswer.objects.filter(question__quiz=quiz)
-            .values('user', 'guest')
-            .distinct()
-            .count()
-        )
-
-    @staticmethod
     def get_users_who_took_this_quiz(quiz):
         # TODO
-        # Test and fix this if necessary
+        # May be a better way to do this
         from .models import UserAnswer
 
         user_answers = (

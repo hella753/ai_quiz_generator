@@ -26,7 +26,7 @@ class QuizRetrievalService:
                 Quiz.objects.prefetch_related("questions"),
                 pk=quiz_id
             )
-            users_count = Quiz.objects.get_count_of_who_took_this_quiz(quiz)
+            users_count = UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
             users = Quiz.objects.get_users_who_took_this_quiz(quiz)
 
             quiz_data = {
@@ -41,7 +41,6 @@ class QuizRetrievalService:
                 }
             }
             return True, quiz_data, status.HTTP_200_OK
-
         except Quiz.DoesNotExist:
             logger.warning(f"Quiz with ID {quiz_id} not found")
             return (
@@ -49,7 +48,6 @@ class QuizRetrievalService:
                 {"error": "Quiz not found"},
                 status.HTTP_404_NOT_FOUND
             )
-
         except Exception as e:
             logger.exception(f"Error retrieving quiz {quiz_id}: {str(e)}")
             return (
@@ -79,26 +77,19 @@ class QuizAnalyticsService:
             total_users = UserAnswer.objects.get_count_of_users_who_took_quiz(
                 quiz.id
             )
-            correct_percentage = UserAnswer.objects.get_correct_percentage(
-                quiz.id
-            )
             hardest_questions = UserAnswer.objects.get_hardest_questions(
                 quiz.id
             )
             analytics_data = {
                 "total_users": total_users,
-                "correct_percentage": correct_percentage,
                 "hardest_questions": hardest_questions
             }
-
             return True, analytics_data, status.HTTP_200_OK
         except Quiz.DoesNotExist:
-            logger.warning(f"Quiz with ID {quiz_id} not found "
-                           f"for analytics or user lacks permission")
+            logger.warning(f"Quiz with ID {quiz_id} not found. ")
             return (
                 False,
-                {"error": "Quiz not found or you don't "
-                          "have permission to view it"},
+                {"error": "Quiz not found. "},
                 status.HTTP_404_NOT_FOUND
             )
         except Exception as e:

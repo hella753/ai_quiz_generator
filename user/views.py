@@ -1,6 +1,6 @@
 import logging
 from django.db.models import OuterRef
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render
 from rest_framework.generics import UpdateAPIView
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated, AllowAny

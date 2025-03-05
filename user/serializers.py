@@ -1,12 +1,16 @@
 import re
+
+from django.contrib.auth.password_validation import validate_password
+
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import ModelSerializer
-from exceptions import DanyTornikeException
+
+from .models import *
+from exceptions import DenyTornikeException
+
 from quiz_app.models import Question, Quiz, UserAnswer, QuizScore
 from quiz_app.serializers import AnswerSerializer
-from .models import *
-from django.contrib.auth.password_validation import validate_password
 
 
 class RegistrationSerializer(ModelSerializer):
@@ -37,7 +41,7 @@ class RegistrationSerializer(ModelSerializer):
 
         normalized_username = re.sub(r"[^a-zA-Z]", "", username).lower()
         if normalized_username == "tornike":
-            raise DanyTornikeException()
+            raise DenyTornikeException()
 
         if password:
             validate_password(password)
@@ -66,10 +70,14 @@ class UserQuestionSerializer(serializers.ModelSerializer):
 
 class UserQuizSerializer(serializers.ModelSerializer):
     """
-    Purpose of this serializer is to display taken quizes.
+    The Purpose of this serializer is to display taken quizzes.
     """
     questions = UserQuestionSerializer(many=True)
-    your_score = serializers.DecimalField(max_digits=5, decimal_places=2, read_only=True)
+    your_score = serializers.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        read_only=True
+    )
 
     class Meta:
         model = Quiz
@@ -78,7 +86,7 @@ class UserQuizSerializer(serializers.ModelSerializer):
 
 class QuizScoreSerializer(serializers.ModelSerializer):
     """
-    Purpose of this serializer is to create and validate quiz scores.
+    The Purpose of this serializer is to create and validate quiz scores.
     """
 
     class Meta:
@@ -119,7 +127,7 @@ class QuizScoreSerializer(serializers.ModelSerializer):
 
 class QuizForCreatorSerializer(serializers.ModelSerializer):
     """
-    Serializer for quiz for creator personal account
+    Serializer for quiz for a creator personal account
     """
 
     class Meta:
@@ -127,9 +135,9 @@ class QuizForCreatorSerializer(serializers.ModelSerializer):
         exclude = ["created_at", "updated_at"]
 
 
-class CreatedQuizeDeatilSerializer(serializers.Serializer):
+class CreatedQuizDetailSerializer(serializers.Serializer):
     """
-    Serializer for quiz detail for creator personal account
+    Serializer for quiz detail for a creator personal account
     """
     id = serializers.CharField()
     name = serializers.CharField()
@@ -152,7 +160,6 @@ class QuizAnalysisSerializer(serializers.Serializer):
     Serializer for quiz analysis
     """
     count_of_users_who_took_quiz = serializers.IntegerField()
-    correct_percentage = serializers.FloatField()
     hardest_questions = HardestQuestionSerializer(many=True)
 
 
@@ -170,8 +177,12 @@ class ChangePasswordSerializer(serializers.Serializer):
         user = self.context['request'].user
 
         if not user.check_password(attrs['password']):
-            raise serializers.ValidationError({"password": "Incorrect Password"})
+            raise serializers.ValidationError(
+                {"password": "Incorrect Password"}
+            )
 
         if attrs['new_password'] != attrs['confirm_password']:
-            raise serializers.ValidationError({"confirm_password": "New passwords do not match"})
+            raise serializers.ValidationError(
+                {"confirm_password": "New passwords do not match"}
+            )
         return attrs

@@ -49,7 +49,9 @@ class AnswerCheck(BaseModel):
         if v:
             sentences = v.split(".")
             if len(sentences) > 2:
-                raise ValueError("Explanation should not exceed two sentences.")
+                raise ValueError(
+                    "Explanation should not exceed two sentences."
+                )
         return v
 
 

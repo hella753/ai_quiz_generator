@@ -1,17 +1,20 @@
 import json
+
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
-from user.serializers import QuizScoreSerializer
-from quiz_app.utils.helpers.serializer_utils import SerializerFactory
+
+from .utils.helpers.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
 from .utils.ai_generator import QuizGenerator
-from quiz_app.utils.helpers.email_sender import EmailSender
-from .permissions import IsCreater
-from .serializers import *
+from .utils.helpers.email_sender import EmailSender
 from .utils.services import QuizDataProcessor
+from .serializers import *
+from .permissions import IsCreator
+
+from user.serializers import QuizScoreSerializer
 
 
 class QuizViewSet(ModelViewSet):
@@ -38,9 +41,9 @@ class QuizViewSet(ModelViewSet):
     permission_classes_map = {
         "create": [IsAuthenticated()],
         "list": [IsAuthenticated()],
-        "update": [IsCreater()],
-        "destroy": [IsCreater()],
-        "partial_update": [IsCreater()]
+        "update": [IsCreator()],
+        "destroy": [IsCreator()],
+        "partial_update": [IsCreator()]
     }
 
     def get_permissions(self):

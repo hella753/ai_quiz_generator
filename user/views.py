@@ -1,6 +1,9 @@
 import logging
 from django.db.models import OuterRef
 from django.shortcuts import render
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+
 from rest_framework.generics import UpdateAPIView
 from rest_framework.mixins import *
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -8,13 +11,15 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet, ReadOnlyModelViewSet
 from rest_framework import status
 from rest_framework.decorators import action
-from quiz_app.permissions import IsCreater, CanSeeAnalysis
+
+from quiz_app.permissions import IsCreator, CanSeeAnalysis
 from quiz_app.utils.paginators import CustomPaginator
 from quiz_app.utils import SerializerFactory
 from quiz_app.utils.helpers.email_sender import EmailSender
-from user.utils.helpers import get_verification_email_content
-from .serializers import *
+
+from .utils.helpers import get_verification_email_content
 from .utils.services import QuizRetrievalService, QuizAnalyticsService
+from .serializers import *
 
 
 logger = logging.getLogger(__name__)
@@ -88,6 +93,10 @@ class TakenQuizViewSet(ReadOnlyModelViewSet):
             your_score=QuizScore.objects.filter(
                 quiz=OuterRef("pk"), user=self.request.user
             ).values("score")
+        ).prefetch_related(
+            "questions",
+            "questions__answers",
+            "questions__your_answers"
         )
         return queryset
 
@@ -98,13 +107,12 @@ class CreatedQuizViewSet(RetrieveModelMixin,
     """
     This ViewSet is responsible for getting quizzes created by the user.
     """
-    serializer_class = SerializerFactory( # type: ignore
+    serializer_class = SerializerFactory(  # type: ignore
         default=QuizForCreatorSerializer,
-        retrieve=CreatedQuizeDeatilSerializer,
-        list=QuizForCreatorSerializer,
+        retrieve=CreatedQuizDetailSerializer,
     )
     pagination_class = CustomPaginator
-    permission_classes = [IsAuthenticated, IsCreater]
+    permission_classes = [IsAuthenticated, IsCreator]
 
     # Inject services
     quiz_service = QuizRetrievalService()
@@ -127,6 +135,7 @@ class CreatedQuizViewSet(RetrieveModelMixin,
             return [IsAuthenticated(), CanSeeAnalysis()]
         return super().get_permissions()
 
+    @method_decorator(cache_page(10 * 1))
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve detailed information about a specific quiz.
@@ -148,11 +157,12 @@ class CreatedQuizViewSet(RetrieveModelMixin,
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @method_decorator(cache_page(10 * 1))
     @action(
         detail=True,
         methods=["GET"],
         url_path="analytics",
-        permission_classes=[IsAuthenticated, IsCreater]
+        permission_classes=[IsAuthenticated, IsCreator]
     )
     def analytics(self, request, pk=None):
         """

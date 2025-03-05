@@ -21,7 +21,7 @@ class UserAnswerManager(models.Manager):
         ).distinct()
         return distinct_users.count()
 
-    def get_hardest_questions(self, quiz_id) :
+    def get_hardest_questions(self, quiz_id):
         """
         Get the hardest questions in the quiz
 
@@ -57,37 +57,43 @@ class QuizManager(models.Manager):
 
     @staticmethod
     def get_users_who_took_this_quiz(quiz):
-        # TODO
-        # May be a better way to do this
         from .models import UserAnswer
 
         user_answers = (
             UserAnswer.objects.filter(question__quiz=quiz)
             .select_related('user', 'question')
         )
+
+        if not user_answers:
+            return []
+
         users = {}
-        for user_answer in user_answers:
+        for answer in user_answers:
             participant_key = (
-                user_answer.user.id if user_answer.user else f"guest-{user_answer.guest}"
+                answer.user.id if answer.user
+                else f"guest-{answer.guest}"
             )
 
             if participant_key not in users:
+                user_data = (
+                    {
+                        "id": answer.user.id,
+                        "username": answer.user.username,
+                        "email": answer.user.email,
+                    }
+                    if answer.user
+                    else {"guest": answer.guest}
+                )
                 users[participant_key] = {
-                    "user": {
-                        "id": user_answer.user.id if user_answer.user else None,
-                        "username": user_answer.user.username if user_answer.user else None,
-                        "email": user_answer.user.email if user_answer.user else None,
-                    } if user_answer.user else {
-                        "guest": user_answer.guest,
-                    },
-                    "answers": []
-            }
+                    "user": user_data,
+                    "answers": [],
+                }
 
             users[participant_key]["answers"].append({
-                "question_id": user_answer.question.id,
-                "answer": user_answer.answer,
-                "correct": user_answer.correct,
-                "explanation": user_answer.explanation,
+                "question_id": answer.question.id,
+                "answer": answer.answer,
+                "correct": answer.correct,
+                "explanation": answer.explanation,
             })
 
         return list(users.values())

@@ -26,7 +26,9 @@ class QuizRetrievalService:
                 Quiz.objects.prefetch_related("questions"),
                 pk=quiz_id
             )
-            users_count = UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
+            users_count = (
+                UserAnswer.objects.get_count_of_users_who_took_quiz(quiz.id)
+            )
             users = Quiz.objects.get_users_who_took_this_quiz(quiz)
 
             quiz_data = {

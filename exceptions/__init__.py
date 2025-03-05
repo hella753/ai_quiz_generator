@@ -1,3 +1,3 @@
-from .custom_exceptions import DanyTornikeException
+from .custom_exceptions import DenyTornikeException
 
-__all__ = ["DanyTornikeException"]
+__all__ = ["DenyTornikeException"]

@@ -1,7 +1,7 @@
 import re
 from django.db import transaction
 from rest_framework import serializers
-from exceptions import DanyTornikeException
+from exceptions import DenyTornikeException
 from .models import *
 from .utils.quiz_modifier import QuizCreator, QuizUpdater
 
@@ -123,5 +123,5 @@ class UserAnswerCheckerSerializer(serializers.ModelSerializer):
         elif self.context.get("guest"):
             normalized_username = re.sub(r"[^a-zA-Z]", "", guest).lower()
             if normalized_username == "tornike":
-                raise DanyTornikeException()
+                raise DenyTornikeException()
         return super().validate(data)

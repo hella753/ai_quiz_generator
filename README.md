@@ -96,7 +96,7 @@ Django Rest Framework viewsets are used for handling CRUD operations for models.
 
 
 ### Permissions
-- **IsCreater**: Custom permission for checking if the user is the creator of the quiz.
+- **IsCreator**: Custom permission for checking if the user is the creator of the quiz.
 - **IsThisUser**: Custom permission for checking if the user is the owner of the account.
 - **CanSeeAnalysis**: Custom permission for safe methods, checking if the user is the owner of the account.
 

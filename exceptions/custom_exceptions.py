@@ -3,7 +3,7 @@ from rest_framework import status
 from django.utils.translation import gettext_lazy as _
 
 
-class DanyTornikeException(APIException):
+class DenyTornikeException(APIException):
     """
     Custom exception which is raised when Tornike tries to use the API.
     """

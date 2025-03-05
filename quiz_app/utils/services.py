@@ -1,8 +1,11 @@
 from typing import Optional
+
 from django.core.files.uploadedfile import InMemoryUploadedFile
+
 from rest_framework import status
 from rest_framework.request import Request
 from rest_framework.viewsets import ModelViewSet
+
 from quiz_app.exceptions import QuizGenerationError
 from quiz_app.serializers import QuizSerializer
 from quiz_app.utils import QuizGenerator, FileProcessor
@@ -75,7 +78,10 @@ class QuizDataProcessor:
         quiz_service = QuizGenerationService()
         try:
             if file:
-                return quiz_service.generate_quiz_from_file(file, creator_input)
+                return quiz_service.generate_quiz_from_file(
+                    file,
+                    creator_input
+                )
             return quiz_service.generate_quiz_data(creator_input)
         except QuizGenerationError as e:
             return {'error': str(e), 'status': status.HTTP_400_BAD_REQUEST}

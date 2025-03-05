@@ -1,5 +1,5 @@
 from rest_framework.views import exception_handler
-from .custom_exceptions import DanyTornikeException
+from .custom_exceptions import DenyTornikeException
 
 
 def custom_exception_handler(exc, context):
@@ -8,7 +8,7 @@ def custom_exception_handler(exc, context):
     """
     response = exception_handler(exc, context)
 
-    if isinstance(exc, DanyTornikeException):
+    if isinstance(exc, DenyTornikeException):
         response.data = {
             'error': exc.default_detail,
             'status_code': exc.status_code,

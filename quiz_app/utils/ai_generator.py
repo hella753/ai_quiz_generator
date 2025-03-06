@@ -1,4 +1,5 @@
 import logging
+
 from typing import Type, Optional, Dict
 from decouple import config  # type: ignore
 from django.utils.translation import gettext as _

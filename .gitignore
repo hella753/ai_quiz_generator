@@ -8,3 +8,4 @@ user/migrations/__pycache__/
 .venv/
 .env
 mypy.ini
+test.json

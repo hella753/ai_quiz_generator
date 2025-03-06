@@ -1,4 +1,5 @@
 import logging
+
 from typing import Type, Optional, Dict
 from decouple import config  # type: ignore
 from django.utils.translation import gettext as _
@@ -92,7 +93,9 @@ class QuizGenerator:
 
         :raises QuizGenerationError: If the AI model fails to generate content.
         """
-        sys_prompt = _("Evaluate quiz answers and return a JSON response.")
+        sys_prompt = _("Evaluate quiz answers and return a JSON response. If the answer is correct,"
+                       "leave the explanation field empty string. "
+                       "Note that question should be returned just as an ID. ")
 
         try:
             raw_response = self.use_ai(sys_prompt, prompt, QuizAnswers)

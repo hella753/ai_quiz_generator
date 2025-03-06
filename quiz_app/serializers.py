@@ -1,5 +1,4 @@
 import re
-from django.db import transaction
 from rest_framework import serializers
 from exceptions import DenyTornikeException
 from .models import *
@@ -64,7 +63,7 @@ class InputSerializer(serializers.Serializer):
 
         if number_of_questions > 10 or number_of_questions < 1:
             raise serializers.ValidationError(
-                "Number of questions should be greater than 0 and less than 10"
+                "Number of questions should be greater than 1 and less than 10"
             )
 
         if type_of_questions not in ["multiple choice", "open"]:
@@ -74,53 +73,40 @@ class InputSerializer(serializers.Serializer):
         return data
 
 
+class AnswerItemSerializer(serializers.Serializer):
+    """
+    Serializer for individual answer items within the submission.
+    """
+    question_id = serializers.IntegerField(min_value=1)
+    answer = serializers.CharField(allow_blank=True)
+    question = serializers.CharField(max_length=250)
+    question_score = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+
 class AnswerCheckerSerializer(serializers.Serializer):
     """
     Serializer for checking user answers input data
     """
-    _user_answers = serializers.CharField(max_length=10000)
-    guest = serializers.CharField(max_length=30, required=False)
-
-
-class UserAnswerCheckerSerializer(serializers.ModelSerializer):
-    """
-    Serializer for creating user answers
-    """
-    class Meta:
-        model = UserAnswer
-        fields = "__all__"
-
-    def create(self, validated_data):
-        results = validated_data
-        if not isinstance(results, list):
-            results = [results]
-        request = self.context.get("request")
-        user = request.user
-        guest = self.context.get('guest')
-        if user.is_authenticated:
-            answers = [
-                UserAnswer(**item, user=user) for item in results
-            ]
-            with transaction.atomic():
-                UserAnswer.objects.bulk_create(answers)
-        else:
-            if guest:
-                request.session["guest_user_name"] = guest
-            guest_name = request.session.get("guest_user_name")
-            answers = [
-                UserAnswer(**item, guest=guest_name) for item in results
-            ]
-            with transaction.atomic():
-                UserAnswer.objects.bulk_create(answers)
+    _user_answers = serializers.ListField(
+        child=AnswerItemSerializer(),
+        min_length=1,
+        error_messages={
+            'min_length': 'At least one answer must be provided',
+            'empty': 'No answers provided'
+        }
+    )
+    guest = serializers.CharField(
+        max_length=30,
+        required=False,
+        allow_blank=True
+    )
 
     def validate(self, data):
-        user = self.context.get("request").user
-        question = data.get("question")
+        """
+        Validate the data.
+        """
         guest = self.context.get("guest")
-        if user.is_authenticated:
-            if UserAnswer.objects.filter(user=user, question=question).exists():
-                raise serializers.ValidationError("You have already taken this quiz")
-        elif self.context.get("guest"):
+        if guest:
             normalized_username = re.sub(r"[^a-zA-Z]", "", guest).lower()
             if normalized_username == "tornike":
                 raise DenyTornikeException()

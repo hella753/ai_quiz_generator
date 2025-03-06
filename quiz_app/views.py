@@ -1,23 +1,25 @@
-import json
+import logging
 
+from django.db import transaction, IntegrityError
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
 
+from mixins.error_handling_mixin import ErrorHandlingMixin
 from .utils.helpers.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
-from .utils.ai_generator import QuizGenerator
-from .utils.helpers.email_sender import EmailSender
-from .utils.services import QuizDataProcessor
+from .utils.services import QuizDataProcessor, QuizSubmissionCheckerService
 from .serializers import *
 from .permissions import IsCreator
 
-from user.serializers import QuizScoreSerializer
+
+logger = logging.getLogger(__name__)
 
 
-class QuizViewSet(ModelViewSet):
+class QuizViewSet(ErrorHandlingMixin, ModelViewSet):
     """
     ViewSet for a Quiz model.
 
@@ -75,62 +77,25 @@ class QuizViewSet(ModelViewSet):
         return Response(data, status=status_code, headers=headers)
 
 
-class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
+class CheckAnswersViewSet(ErrorHandlingMixin,
+                          CreateModelMixin,
+                          GenericViewSet):
     queryset = Quiz.objects.select_related('creator')
     serializer_class = AnswerCheckerSerializer
 
+    quiz_submission_service = QuizSubmissionCheckerService()
+
     def create(self, request, *args, **kwargs):
-        answer_data = request.data.get('_user_answers', [])
-        guest = request.data.get("guest")
-        answer_data = json.loads(answer_data)
-        data = []
-        quiz = Question.objects.filter(
-            id=int(answer_data[0]["question_id"])
-        ).first().quiz
-        quiz_creator = quiz.creator
-        for answer in answer_data:
-            question = (Question.objects.select_related('quiz')
-                        .filter(id=int(answer["question_id"]))
-                        .first())
-            item = {
-                "answer": answer["answer"],
-                "question": question.question,
-                "question_id": question.id,
-                "question_score": question.score
-            }
-            data.append(item)
-        results = QuizGenerator().check_answers(str(data))
-        answers = results["answers"]
-        score = results["user_total_score"]
-        serializer = QuizScoreSerializer(
-            data={
-                "quiz": quiz.id,
-                "score": score
-            },
-            context={"request": request, "guest": guest}
+        """
+        Process quiz submissions and return graded results.
+        """
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        results = (
+            self.quiz_submission_service.process_quiz_submission(
+                request,
+                serializer.validated_data)
         )
-        if serializer.is_valid():
-            serializer.save()
-
-        answers = [
-            {**item, "question": item.pop("question_id")} for item in answers
-        ]
-
-        serializer = UserAnswerCheckerSerializer(
-            data=answers,
-            many=True,
-            context={"request": request, "guest": guest}
-        )
-        if serializer.is_valid():
-            serializer.save()
-
-        if guest:
-            user = guest
-        else:
-            user = request.user.username
-        EmailSender(
-            "Somebody took the quiz!",
-            f"{user} took the quiz. Visit the website for more information",
-            [quiz_creator.email]
-        ).send_email()
         return Response(results, status=status.HTTP_201_CREATED)
+

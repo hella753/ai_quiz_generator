@@ -1,11 +1,12 @@
+import copy
 import logging
-import uuid
 from typing import Optional, List, Dict
+from uuid import UUID
 
 from django.core.files.uploadedfile import InMemoryUploadedFile
-from django.db import transaction
-from django.db.utils import IntegrityError
+from django.db import transaction, IntegrityError
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 from rest_framework.viewsets import ModelViewSet
 
@@ -136,7 +137,9 @@ class QuizSubmissionCheckerService:
     Service for checking quiz submissions.
     """
 
-    def process_quiz_submission(self, request: Request, data: dict) -> dict:
+    def process_quiz_submission(self,
+                                request: Request,
+                                data: dict) -> dict:
         """
         Process quiz submissions and return graded results.
 
@@ -145,29 +148,55 @@ class QuizSubmissionCheckerService:
 
         :return: Graded results.
         """
-        answer_data = data.get('_user_answers', [])
-        is_guest = data.get('guest', False)
-        if not answer_data:
-            return {"error": "No answers provided", "user_total_score": 0, "answers": []}
+        try:
+            answer_data = data.get('_user_answers', [])
+            is_guest = data.get('guest', False)
 
-        # Get the Quiz Object
-        first_question = answer_data[0].get("question_id")
-        quiz = Question.objects.get(id=first_question).quiz
+            # Get the Quiz Object
+            first_question = answer_data[0].get("question_id")
 
-        # Check the answers and save the results
-        results = QuizGenerator().check_answers(str(answer_data))
-        graded_answers = results.get("answers", [])
-        total_score = results.get("user_total_score", 0)
+            try:
+                quiz = Question.objects.get(id=first_question).quiz
+            except Question.DoesNotExist:
+                raise ValidationError(
+                    f"Question with ID {first_question} does not exist"
+                )
 
-        # Save the Score and User Answers
-        self._save_quiz_score(quiz.id, total_score, request, is_guest)
-        self._save_user_answers(graded_answers, request, is_guest)
-        # Send email notification to the quiz creator
-        self._notify_quiz_creator(quiz, is_guest if is_guest else request.user.username)
-        return results
+            # Check the answers and save the results
+            results = QuizGenerator().check_answers(str(answer_data))
+
+            ai_results = copy.deepcopy(results)
+
+            graded_answers = results.get("answers", [])
+            total_score = results.get("user_total_score", 0)
+
+            # Save the Score and User Answers
+            self._save_quiz_score(quiz.id, total_score, request, is_guest)
+            self._save_user_answers(graded_answers, request, is_guest)
+            # Send email notification to the quiz creator
+            self._notify_quiz_creator(
+                quiz, is_guest if is_guest else request.user.username
+            )
+            return ai_results
+        except ValidationError as e:
+            logger.error(
+                f"Validation error in quiz submission: {str(e)}",
+                exc_info=True
+            )
+            raise
+        except Exception as e:
+            logger.error(
+                f"Error processing quiz submission: {str(e)}",
+                exc_info=True
+            )
+            raise ValidationError(
+                f"Failed to process quiz submission: {str(e)}"
+            )
 
     @staticmethod
-    def _save_quiz_score(quiz_id: uuid, score: float, request: Request, is_guest: bool) -> None:
+    def _save_quiz_score(quiz_id: UUID,
+                         score: float, request: Request,
+                         is_guest: bool) -> None:
         """
         Save the user's quiz score.
 
@@ -184,7 +213,9 @@ class QuizSubmissionCheckerService:
         serializer.save()
 
     @staticmethod
-    def _save_user_answers(graded_answers: List[Dict], request: Request, is_guest: bool) -> None:
+    def _save_user_answers(graded_answers: List[Dict],
+                           request: Request,
+                           is_guest: bool) -> None:
         """
         Save graded answers.
 
@@ -197,21 +228,60 @@ class QuizSubmissionCheckerService:
         if not graded_answers:
             return
 
-        answers = []
-        if user.is_authenticated:
-            answers = [UserAnswer(
-                user=user, question=Question(id=item.pop("question")), **item
-            ) for item in graded_answers]
-        else:
-            if guest and not request.session.get("guest_user_name"):
-                request.session["guest_user_name"] = guest
-            guest_name = request.session.get("guest_user_name", guest)
-            answers = [UserAnswer(
-                guest=guest_name, question=Question(item.pop("question")), **item
-            ) for item in graded_answers]
+        try:
+            answers = []
+            question_ids = [item.get("question") for item in graded_answers]
+            existing_questions = set(Question.objects.filter(
+                id__in=question_ids).values_list('id', flat=True))
+            if len(existing_questions) != len(question_ids):
+                invalid_ids = set(question_ids) - existing_questions
+                raise ValidationError(f"Invalid question IDs: {invalid_ids}")
 
-        with transaction.atomic():
-            UserAnswer.objects.bulk_create(answers)
+            if user.is_authenticated:
+                answers = [UserAnswer(
+                    user=user, question=Question(
+                        id=item.pop("question")
+                    ), **item
+                ) for item in graded_answers]
+            else:
+                if guest and not request.session.get("guest_user_name"):
+                    request.session["guest_user_name"] = guest
+                guest_name = request.session.get("guest_user_name", guest)
+                answers = [UserAnswer(
+                    guest=guest_name, question=Question(
+                        item.pop("question")
+                    ), **item
+                ) for item in graded_answers]
+
+            with transaction.atomic():
+                UserAnswer.objects.bulk_create(answers)
+
+        except IntegrityError as e:
+            logger.error(
+                f"Integrity error saving answers: {str(e)}",
+                exc_info=True
+            )
+            error_message = str(e)
+            if "foreign key constraint" in error_message:
+                raise ValidationError(
+                    "Question ID or user reference is invalid"
+                )
+            else:
+                raise ValidationError(
+                    f"Database integrity error: {error_message}"
+                )
+        except ValidationError as e:
+            logger.error(
+                f"Validation error saving answers: {str(e)}",
+                exc_info=True
+            )
+            raise
+        except Exception as e:
+            logger.error(
+                f"Unexpected error saving answers: {str(e)}",
+                exc_info=True
+            )
+            raise ValidationError(f"Failed to save answers: {str(e)}")
 
     @staticmethod
     def _notify_quiz_creator(quiz: Quiz, user_identifier: str) -> None:

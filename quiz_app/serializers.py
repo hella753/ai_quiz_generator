@@ -1,5 +1,4 @@
 import re
-from django.db import transaction
 from rest_framework import serializers
 from exceptions import DenyTornikeException
 from .models import *
@@ -64,7 +63,7 @@ class InputSerializer(serializers.Serializer):
 
         if number_of_questions > 10 or number_of_questions < 1:
             raise serializers.ValidationError(
-                "Number of questions should be greater than 0 and less than 10"
+                "Number of questions should be greater than 1 and less than 10"
             )
 
         if type_of_questions not in ["multiple choice", "open"]:
@@ -96,11 +95,15 @@ class AnswerCheckerSerializer(serializers.Serializer):
             'empty': 'No answers provided'
         }
     )
-    guest = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    guest = serializers.CharField(
+        max_length=30,
+        required=False,
+        allow_blank=True
+    )
 
     def validate(self, data):
         """
-        Validate answer data with improved checks.
+        Validate the data.
         """
         guest = self.context.get("guest")
         if guest:
@@ -108,15 +111,3 @@ class AnswerCheckerSerializer(serializers.Serializer):
             if normalized_username == "tornike":
                 raise DenyTornikeException()
         return super().validate(data)
-
-
-#
-# {
-#     "_user_answers": [
-# {"question_id": 29, "answer": "70", "question": "What is the sum of 23 and 47?", "question_score": 1.00},
-# {"question_id": 30, "answer": "2<x<12", "question": "If a triangle has two sides measuring 5 cm and 7 cm, what could be the length of the third side?", "question_score": 1.00},
-# {"question_id": 31, "answer": "8*3", "question": "Explain how you would find the area of a rectangle with a length of 8 cm and a width of 3 cm.", "question_score": 1.00},
-# {"question_id": 32, "answer": "7", "question": "If you have 10 apples and you give 3 to a friend, how many apples do you have left?", "question_score": 1.00}
-# ],
-#     "guest": ""
-# }

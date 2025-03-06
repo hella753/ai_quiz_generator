@@ -1,12 +1,14 @@
 import logging
 
-from django.db.models import ForeignKey
+from django.db import transaction, IntegrityError
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
 
+from mixins.error_handling_mixin import ErrorHandlingMixin
 from .utils.helpers.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
 from .utils.services import QuizDataProcessor, QuizSubmissionCheckerService
@@ -17,7 +19,7 @@ from .permissions import IsCreator
 logger = logging.getLogger(__name__)
 
 
-class QuizViewSet(ModelViewSet):
+class QuizViewSet(ErrorHandlingMixin, ModelViewSet):
     """
     ViewSet for a Quiz model.
 
@@ -75,7 +77,9 @@ class QuizViewSet(ModelViewSet):
         return Response(data, status=status_code, headers=headers)
 
 
-class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
+class CheckAnswersViewSet(ErrorHandlingMixin,
+                          CreateModelMixin,
+                          GenericViewSet):
     queryset = Quiz.objects.select_related('creator')
     serializer_class = AnswerCheckerSerializer
 
@@ -85,21 +89,13 @@ class CheckAnswersViewSet(CreateModelMixin, GenericViewSet):
         """
         Process quiz submissions and return graded results.
         """
-        try:
-            serializer = self.get_serializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
 
-            with transaction.atomic():
-                results = self.quiz_submission_service.process_quiz_submission(
-                    request,
-                    serializer.validated_data
-                )
-            return Response(results, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            logger.error(f"Error processing quiz answers: {str(e)}", exc_info=True)
-            return Response(
-                {"error": f"Failed to process quiz answers {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        results = (
+            self.quiz_submission_service.process_quiz_submission(
+                request,
+                serializer.validated_data)
+        )
+        return Response(results, status=status.HTTP_201_CREATED)
 

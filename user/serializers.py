@@ -110,14 +110,20 @@ class QuizScoreSerializer(serializers.ModelSerializer):
             else:
                 if guest:
                     request.session["guest_user_name"] = guest
-                guest_name = request.session.get("guest_user_name")
+                else:
+                    unique_id = uuid.uuid4()
+                    request.session["guest_user_name"] = f"Guest-{unique_id}"
+
+                request.session.modified = True
+                guest_name = request.session["guest_user_name"]
+
                 return QuizScore.objects.create(
                     guest=guest_name,
                     quiz=quiz,
                     score=score
                 )
+                return quiz_score
 
-            return quiz_score
 
     def validate(self, data):
         request = self.context.get("request")

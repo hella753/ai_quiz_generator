@@ -1,5 +1,6 @@
 import copy
 import logging
+import uuid
 from typing import Optional, List, Dict
 from uuid import UUID
 
@@ -244,9 +245,15 @@ class QuizSubmissionCheckerService:
                     ), **item
                 ) for item in graded_answers]
             else:
-                if guest and not request.session.get("guest_user_name"):
+                if guest:
                     request.session["guest_user_name"] = guest
-                guest_name = request.session.get("guest_user_name", guest)
+                else:
+                    unique_id = uuid.uuid4()
+                    request.session["guest_user_name"] = f"Guest-{unique_id}"
+
+                request.session.modified = True
+                guest_name = request.session["guest_user_name"]
+
                 answers = [UserAnswer(
                     guest=guest_name, question=Question(
                         item.pop("question")

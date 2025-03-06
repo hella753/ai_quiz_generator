@@ -27,7 +27,6 @@ class Quiz(BaseModel):
     questions: list[Question]
 
     @field_validator("questions")
-    @classmethod
     def check_max_questions(cls, v):
         if len(v) > 10:
             raise ValueError("Quiz cannot have more than 10 questions.")
@@ -44,7 +43,6 @@ class AnswerCheck(BaseModel):
     correct: bool
 
     @field_validator('explanation')
-    @classmethod
     def validate_explanation(cls, v):
         if v:
             sentences = v.split(".")

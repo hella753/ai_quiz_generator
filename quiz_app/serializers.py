@@ -74,54 +74,49 @@ class InputSerializer(serializers.Serializer):
         return data
 
 
+class AnswerItemSerializer(serializers.Serializer):
+    """
+    Serializer for individual answer items within the submission.
+    """
+    question_id = serializers.IntegerField(min_value=1)
+    answer = serializers.CharField(allow_blank=True)
+    question = serializers.CharField(max_length=250)
+    question_score = serializers.DecimalField(max_digits=5, decimal_places=2)
+
+
 class AnswerCheckerSerializer(serializers.Serializer):
     """
     Serializer for checking user answers input data
     """
-    _user_answers = serializers.CharField(max_length=10000)
-    guest = serializers.CharField(max_length=30, required=False)
-
-
-class UserAnswerCheckerSerializer(serializers.ModelSerializer):
-    """
-    Serializer for creating user answers
-    """
-    class Meta:
-        model = UserAnswer
-        fields = "__all__"
-
-    def create(self, validated_data):
-        results = validated_data
-        if not isinstance(results, list):
-            results = [results]
-        request = self.context.get("request")
-        user = request.user
-        guest = self.context.get('guest')
-        if user.is_authenticated:
-            answers = [
-                UserAnswer(**item, user=user) for item in results
-            ]
-            with transaction.atomic():
-                UserAnswer.objects.bulk_create(answers)
-        else:
-            if guest:
-                request.session["guest_user_name"] = guest
-            guest_name = request.session.get("guest_user_name")
-            answers = [
-                UserAnswer(**item, guest=guest_name) for item in results
-            ]
-            with transaction.atomic():
-                UserAnswer.objects.bulk_create(answers)
+    _user_answers = serializers.ListField(
+        child=AnswerItemSerializer(),
+        min_length=1,
+        error_messages={
+            'min_length': 'At least one answer must be provided',
+            'empty': 'No answers provided'
+        }
+    )
+    guest = serializers.CharField(max_length=30, required=False, allow_blank=True)
 
     def validate(self, data):
-        user = self.context.get("request").user
-        question = data.get("question")
+        """
+        Validate answer data with improved checks.
+        """
         guest = self.context.get("guest")
-        if user.is_authenticated:
-            if UserAnswer.objects.filter(user=user, question=question).exists():
-                raise serializers.ValidationError("You have already taken this quiz")
-        elif self.context.get("guest"):
+        if guest:
             normalized_username = re.sub(r"[^a-zA-Z]", "", guest).lower()
             if normalized_username == "tornike":
                 raise DenyTornikeException()
         return super().validate(data)
+
+
+#
+# {
+#     "_user_answers": [
+# {"question_id": 29, "answer": "70", "question": "What is the sum of 23 and 47?", "question_score": 1.00},
+# {"question_id": 30, "answer": "2<x<12", "question": "If a triangle has two sides measuring 5 cm and 7 cm, what could be the length of the third side?", "question_score": 1.00},
+# {"question_id": 31, "answer": "8*3", "question": "Explain how you would find the area of a rectangle with a length of 8 cm and a width of 3 cm.", "question_score": 1.00},
+# {"question_id": 32, "answer": "7", "question": "If you have 10 apples and you give 3 to a friend, how many apples do you have left?", "question_score": 1.00}
+# ],
+#     "guest": ""
+# }

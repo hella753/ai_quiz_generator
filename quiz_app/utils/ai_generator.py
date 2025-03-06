@@ -92,7 +92,8 @@ class QuizGenerator:
 
         :raises QuizGenerationError: If the AI model fails to generate content.
         """
-        sys_prompt = _("Evaluate quiz answers and return a JSON response.")
+        sys_prompt = _("Evaluate quiz answers and return a JSON response. "
+                       "Note that question should be returned just as an ID. ")
 
         try:
             raw_response = self.use_ai(sys_prompt, prompt, QuizAnswers)

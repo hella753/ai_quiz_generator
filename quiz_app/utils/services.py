@@ -174,10 +174,10 @@ class QuizSubmissionCheckerService:
 
             # Save the Score and User Answers
             self._save_quiz_score(quiz.id, total_score, request, is_guest)
-            self._save_user_answers(graded_answers, request, is_guest)
+            self._save_user_answers(graded_answers, request)
             # Send email notification to the quiz creator
             self._notify_quiz_creator(
-                quiz, is_guest if is_guest else request.user.username
+                quiz, request
             )
             return ai_results
         except ValidationError as e:
@@ -216,17 +216,14 @@ class QuizSubmissionCheckerService:
 
     @staticmethod
     def _save_user_answers(graded_answers: List[Dict],
-                           request: Request,
-                           is_guest: bool) -> None:
+                           request: Request) -> None:
         """
         Save graded answers.
 
         :param graded_answers: List of graded answers.
         :param request: Request an object.
-        :param is_guest: Guest user flag.
         """
         user = request.user
-        guest = is_guest
         if not graded_answers:
             return
 
@@ -246,13 +243,6 @@ class QuizSubmissionCheckerService:
                     ), **item
                 ) for item in graded_answers]
             else:
-                if guest:
-                    request.session["guest_user_name"] = guest
-                else:
-                    unique_id = uuid.uuid4()
-                    request.session["guest_user_name"] = f"Guest-{unique_id}"
-
-                request.session.modified = True
                 guest_name = request.session["guest_user_name"]
 
                 answers = [UserAnswer(
@@ -292,14 +282,21 @@ class QuizSubmissionCheckerService:
             raise ValidationError(f"Failed to save answers: {str(e)}")
 
     @staticmethod
-    def _notify_quiz_creator(quiz: Quiz, user_identifier: str) -> None:
+    def _notify_quiz_creator(quiz: Quiz,
+                             request: Request) -> None:
         """
         Notify quiz creator about the submission.
 
         :param quiz: Quiz object.
-        :param user_identifier: User identifier.
+        :param request: Request Object.
         """
         try:
+            user = request.user
+            if user.is_authenticated:
+                user_identifier = user.username
+            else:
+                user_identifier = request.session["guest_user_name"]
+
             send_email.delay(
                 subject="New Quiz Submission",
                 message=f"{user_identifier} completed your quiz '{quiz.name}'. "

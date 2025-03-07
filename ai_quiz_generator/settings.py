@@ -66,7 +66,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    'middlewares.unauthorized_middleware.AnonymousUserMiddleware'
+    # 'middlewares.unauthorized_middleware.AnonymousUserMiddleware'
 ]
 
 ROOT_URLCONF = 'ai_quiz_generator.urls'

@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     'user',
     'quiz_app',
     'rosetta',
+    'celery',
+    'django_celery_results',
+
 ]
 
 AUTH_USER_MODEL = "user.User"
@@ -175,3 +178,11 @@ REST_FRAMEWORK = {
 
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
+
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+
+task_serializer = "json"
+accept_content = ["application/json"]
+result_serializer = "json"
+timezone = "Asia/Tbilisi"
+result_backend = "django-db"

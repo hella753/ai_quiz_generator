@@ -13,9 +13,9 @@ from rest_framework import status
 from rest_framework.decorators import action
 
 from quiz_app.permissions import IsCreator, CanSeeAnalysis
+from quiz_app.tasks import send_email
 from quiz_app.utils.paginators import CustomPaginator
 from quiz_app.utils import SerializerFactory
-from quiz_app.utils.helpers.email_sender import EmailSender
 
 from .utils.helpers import get_verification_email_content
 from .utils.services import QuizRetrievalService, QuizAnalyticsService
@@ -66,11 +66,11 @@ class UserViewSet(CreateModelMixin, GenericViewSet):
             verification_url
         )
 
-        EmailSender(
+        send_email.delay(
             subject=subject,
             message=message,
             to=[user.email]
-        ).send_email()
+        )
 
 
 class TakenQuizViewSet(ReadOnlyModelViewSet):

@@ -15,7 +15,8 @@ from quiz_app.exceptions import QuizGenerationError
 from quiz_app.models import Question, Quiz, UserAnswer
 from quiz_app.serializers import QuizSerializer
 from quiz_app.utils import QuizGenerator, FileProcessor
-from quiz_app.utils.helpers.email_sender import EmailSender
+
+from quiz_app.tasks import send_email
 from user.serializers import QuizScoreSerializer
 
 
@@ -299,11 +300,11 @@ class QuizSubmissionCheckerService:
         :param user_identifier: User identifier.
         """
         try:
-            EmailSender(
-                "New Quiz Submission",
-                f"{user_identifier} completed your quiz '{quiz.name}'. "
-                f"View the results in your dashboard.",
-                [quiz.creator.email]
-            ).send_email()
+            send_email.delay(
+                subject="New Quiz Submission",
+                message=f"{user_identifier} completed your quiz '{quiz.name}'. "
+                        f"View the results in your dashboard.",
+                to=[quiz.creator.email]
+            )
         except Exception as e:
             logger.error(f"Failed to send quiz notification: {str(e)}")

@@ -16,3 +16,23 @@ def get_verification_email_content(username: str,
     Regards,
     Team Interpredators
     """
+
+
+def get_reset_email_content(username: str,
+                        url: str) -> str:
+    """
+    Return the content for forgotten password reset emails.
+    """
+
+    return f"""
+    Hi, {username},
+    
+    You've requested to reset your password. Please click the link below to set a new password:
+     
+    {url}
+     
+    This link is valid for an hour. If you didn't request this password reset, please ignore this email.
+            
+    Thank you,
+    Team Interpredators
+    """

@@ -20,6 +20,7 @@ from quiz_app.utils import SerializerFactory
 from .utils.helpers import get_verification_email_content
 from .utils.services import QuizRetrievalService, QuizAnalyticsService
 from .serializers import *
+from rest_framework.views import APIView
 
 
 logger = logging.getLogger(__name__)

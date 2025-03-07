@@ -3,6 +3,8 @@ from django.db.models import OuterRef
 from django.shortcuts import render
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 from rest_framework.generics import UpdateAPIView
 from rest_framework.mixins import *
@@ -17,7 +19,7 @@ from quiz_app.tasks import send_email
 from quiz_app.utils.paginators import CustomPaginator
 from quiz_app.utils import SerializerFactory
 
-from .utils.helpers import get_verification_email_content
+from .utils.helpers import get_verification_email_content, get_reset_email_content
 from .utils.services import QuizRetrievalService, QuizAnalyticsService
 from .serializers import *
 from rest_framework.views import APIView

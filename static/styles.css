@@ -1,0 +1,122 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #3f51b5;
+    padding-bottom: 1rem;
+}
+
+.info-field {
+    margin-bottom: 1rem;
+}
+
+.info-field label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    color: #3f51b5;
+    font-size: 0.9rem;
+}
+
+.info-field input {
+    padding: 0.7rem;
+    width: 100%;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-family: inherit;
+}
+
+.title {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.title h1 {
+    color: #3f51b5;
+    font-weight: 600;
+    margin: 0;
+}
+
+.question {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 8px;
+    background-color: #f5f7ff;
+}
+
+.question-number {
+    font-weight: bold;
+    margin-right: 0.5rem;
+    color: #3f51b5;
+}
+
+.multiple-choice {
+    margin-top: 1rem;
+}
+
+.multiple-choice label {
+    display: block;
+    margin: 0.8rem 0;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+.multiple-choice input[type="radio"] {
+    margin-right: 10px;
+}
+
+.open-ended textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 0.8rem;
+    margin-top: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+
+.footer {
+    margin-top: 2rem;
+    text-align: center;
+    color: #666;
+    padding-top: 1rem;
+    border-top: 1px solid #e0e0e0;
+}
+
+.student-info, .date-info {
+    flex: 1;
+    padding: 0 10px;
+}
+
+@media print {
+    body {
+        background-color: #fff;
+    }
+
+    .question {
+        break-inside: avoid;
+    }
+
+    .container {
+        padding: 0;
+    }
+}

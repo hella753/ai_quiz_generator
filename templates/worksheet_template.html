@@ -1,0 +1,65 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Worksheet</title>
+    <link rel="stylesheet" href="{% static "styles.css" %}">
+</head>
+
+<body>
+<div class="container">
+    <div class="header">
+        <div class="student-info">
+            <div class="info-field">
+                <label for="student-name">Student Name:</label>
+                <input type="text" id="student-name" name="student-name">
+            </div>
+            <div class="info-field">
+                <label for="class-name">Class Name:</label>
+                <input type="text" id="class-name" name="class-name">
+            </div>
+        </div>
+        <div class="date-info">
+            <div class="info-field">
+                <label for="date">Date:</label>
+                <input type="text" id="date" name="date">
+            </div>
+        </div>
+    </div>
+
+    <div class="title">
+        <h1>{{ quiz_name }}</h1>
+    </div>
+
+    <div class="questions">
+        {% for item in questions %}
+            <p><span class="question-number">{{ forloop.counter }}.</span> {{ item.question }}</p>
+            <p>Score: {{ item.score }}</p>
+            {% if item.answers %}
+                <div class="multiple-choice">
+                    {% for answer in item.answers %}
+                        <label>
+                            <input type="radio" name="q1" value="a">{{ forloop.counter }}. {{ answer.answer }}
+                        </label>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="question">
+                    <div class="open-ended">
+                        <label>
+                            <textarea></textarea>
+                        </label>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <div class="footer">
+            <p>Complete all questions. Good luck!</p>
+        </div>
+    </div>
+</div>
+</body>
+</html>

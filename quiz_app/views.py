@@ -1,6 +1,7 @@
 import logging
 
 from rest_framework import status
+from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
@@ -11,8 +12,8 @@ from .utils.helpers.serializer_utils import SerializerFactory
 from .utils.paginators import CustomPaginator
 from .utils.services import QuizDataProcessor, QuizSubmissionCheckerService
 from .serializers import *
-from .permissions import IsCreator
-
+from .permissions import IsCreator, CanSeeAnalysis
+from .utils.worksheet import ExportToWorksheet
 
 logger = logging.getLogger(__name__)
 
@@ -73,6 +74,24 @@ class QuizViewSet(ErrorHandlingMixin, ModelViewSet):
         data_processor = QuizDataProcessor(request, self)
         data, status_code, headers = data_processor.process_quiz_data()
         return Response(data, status=status_code, headers=headers)
+
+    @action(detail=True, methods=["get"], permission_classes=[CanSeeAnalysis])
+    def export_to_worksheet(self, request, *args, **kwargs):
+        """
+        Export quiz data to a worksheet.
+
+        :param request: Request object.
+        :param args: Arguments.
+        :param kwargs: Keyword arguments.
+
+        :return: Response object.
+        """
+        quiz = self.get_object()
+        serializer = self.get_serializer(quiz)
+        data = serializer.data
+        export_to_worksheet = ExportToWorksheet(request, data)
+        response = export_to_worksheet.create_worksheet()
+        return Response(response, status=status.HTTP_200_OK)
 
 
 class CheckAnswersViewSet(ErrorHandlingMixin,

@@ -157,6 +157,10 @@ MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 STATIC_ROOT = BASE_DIR / 'static_common'
 
+STATICFILES_DIRS = [
+    BASE_DIR / 'static'
+]
+
 INTERNAL_IPS = [
     "127.0.0.1",
 ]

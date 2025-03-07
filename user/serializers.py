@@ -1,6 +1,7 @@
 import re
 
 from django.contrib.auth.password_validation import validate_password
+from django.db import transaction
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
@@ -99,22 +100,30 @@ class QuizScoreSerializer(serializers.ModelSerializer):
         quiz = validated_data.get("quiz")
         score = validated_data.get("score")
 
-        if request.user.is_authenticated:
-            quiz_score = QuizScore.objects.create(
-                user=request.user,
-                quiz=quiz,
-                score=score
-            )
-        else:
-            if guest:
-                request.session["guest_user_name"] = guest
-            guest_name = request.session.get("guest_user_name")
-            quiz_score = QuizScore.objects.create(
-                guest=guest_name,
-                quiz=quiz,
-                score=score
-            )
-        return quiz_score
+        with transaction.atomic():
+            if request.user.is_authenticated:
+                return QuizScore.objects.create(
+                    user=request.user,
+                    quiz=quiz,
+                    score=score
+                )
+            else:
+                if guest:
+                    request.session["guest_user_name"] = guest
+                else:
+                    unique_id = uuid.uuid4()
+                    request.session["guest_user_name"] = f"Guest-{unique_id}"
+
+                request.session.modified = True
+                guest_name = request.session["guest_user_name"]
+
+                return QuizScore.objects.create(
+                    guest=guest_name,
+                    quiz=quiz,
+                    score=score
+                )
+                return quiz_score
+
 
     def validate(self, data):
         request = self.context.get("request")

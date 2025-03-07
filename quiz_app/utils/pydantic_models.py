@@ -37,20 +37,10 @@ class AnswerCheck(BaseModel):
     """
     This class is used to validate the answer results.
     """
-    question_id: int
+    question: int
     answer: str
     explanation: Optional[str]  # Explanation can be empty
     correct: bool
-
-    @field_validator('explanation')
-    def validate_explanation(cls, v):
-        if v:
-            sentences = v.split(".")
-            if len(sentences) > 2:
-                raise ValueError(
-                    "Explanation should not exceed two sentences."
-                )
-        return v
 
 
 class QuizAnswers(BaseModel):

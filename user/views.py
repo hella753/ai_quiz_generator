@@ -240,3 +240,75 @@ class ChangePasswordView(UpdateAPIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class RequestPasswordResetView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'email': openapi.Schema(type=openapi.TYPE_STRING, example="example@example.com")
+            },
+            required=['email'],
+        ),
+        responses={200: openapi.Response("Email has been sent successfully.")}
+    )
+    def post(self, request):
+        serializer = RequestPasswordResetSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        email = serializer.validated_data.get('email')
+
+        user = User.objects.filter(email=email).first()
+        token = PasswordResetToken.objects.create(user=user)
+        self._send_reset_email(user, token)
+
+        return Response(
+            {"detail": "Password reset email has been sent."},
+            status=status.HTTP_200_OK
+        )
+
+    def _send_reset_email(self, user, token):
+        url = (f"{self.request.build_absolute_uri('/')[:-1]}/"
+               f"accounts/forgot-password/reset/{token.token}/")
+        subject = "Password Reset"
+        message = get_reset_email_content(user.username,
+                                          url)
+        send_email().delay(
+            subject=subject,
+            message=message,
+            to=[user.email]
+        )
+
+
+class ResetPasswordView(APIView):
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'new_password': openapi.Schema(type=openapi.TYPE_STRING, example="NewSecurePassword123"),
+                "confirm_password": openapi.Schema(type=openapi.TYPE_STRING, example="NewSecurePassword123")
+            },
+            required=['new_password', 'confirm_password'],
+        ),
+        responses={200: openapi.Response("Password has been reset successfully.")}
+    )
+    def post(self, request, token):
+        serializer = ResetForgottenPasswordSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        new_password = serializer.validated_data.get('new_password')
+
+        reset_token = PasswordResetToken.objects.get(token=token)
+        if not reset_token or not reset_token.is_valid():
+            return Response({"token": "token has expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = reset_token.user
+        user.set_password(new_password)
+        user.save()
+        reset_token.delete()
+        return Response({"detail": "Password has been reset successfully."}, status=status.HTTP_200_OK)

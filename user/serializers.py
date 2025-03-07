@@ -195,3 +195,32 @@ class ChangePasswordSerializer(serializers.Serializer):
                 {"confirm_password": "New passwords do not match"}
             )
         return attrs
+
+
+class RequestPasswordResetSerializer(serializers.Serializer):
+    """Handles password reset requests by validating email."""
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        """Validates email existence and ensures the account is active."""
+        email = value.strip().lower()
+        user = User.objects.filter(email=email).first()
+        if user and not user.is_active:
+            raise serializers.ValidationError("This account is inactive.")
+        return email
+
+
+class ResetForgottenPasswordSerializer(serializers.Serializer):
+    """Validates new password and confirms match."""
+    new_password = serializers.CharField(max_length=128,
+                                         write_only=True,
+                                         validators=[validate_password])
+    confirm_password = serializers.CharField(max_length=128, write_only=True)
+
+    def validate(self, attrs):
+        """Checks if new passwords match."""
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError(
+                {"confirm_password": "Passwords do not match"}
+            )
+        return attrs

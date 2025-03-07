@@ -14,5 +14,7 @@ urlpatterns = router.urls
 urlpatterns += [
 
     path('verify-account/<uuid:token>/', verify_account_view, name='verify-account'),
-    path('change-password/', ChangePasswordView.as_view(), name='change-password')
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('forgot-password/request/', RequestPasswordResetView.as_view(), name='request-password-reset'),
+    path('forgot-password/reset/<uuid:token>/', ResetPasswordView.as_view(), name='reset-password'),
 ]

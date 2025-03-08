@@ -2,6 +2,7 @@ import re
 from rest_framework import serializers
 from exceptions import DenyTornikeException
 from .models import *
+from .utils.helpers.supported_languages import supported_languages
 from .utils.quiz_modifier import QuizCreator, QuizUpdater
 
 
@@ -51,8 +52,9 @@ class InputSerializer(serializers.Serializer):
         choices=["multiple choice", "open"],
     )
     number_of_questions = serializers.IntegerField()
-    topic = serializers.CharField(max_length=150)
+    topic_in_preferred_language = serializers.CharField(max_length=150, required=False)
     file = serializers.FileField(required=False)
+    language_in_english = serializers.CharField(max_length=50, required=False)
 
     def validate(self, data):
         """
@@ -60,7 +62,26 @@ class InputSerializer(serializers.Serializer):
         """
         number_of_questions = int(data.get("number_of_questions"))
         type_of_questions = data.get("type_of_questions")
+        language = data.get("language_in_english")
+        topic = data.get("topic_in_preferred_language")
+        file = data.get("file")
 
+        if language and language.lower() not in supported_languages:
+            raise serializers.ValidationError(
+                "Language not supported"
+            )
+        if not file and not topic:
+            raise serializers.ValidationError(
+                "One of the fields should be provided (file or topic)"
+            )
+        if file and topic:
+            raise serializers.ValidationError(
+                "Only one of the fields should be provided (file or topic)"
+            )
+        if file and language:
+            raise serializers.ValidationError(
+                "Language should not be provided when file is uploaded"
+            )
         if number_of_questions > 10 or number_of_questions < 1:
             raise serializers.ValidationError(
                 "Number of questions should be greater than 1 and less than 10"
@@ -95,6 +116,10 @@ class AnswerCheckerSerializer(serializers.Serializer):
             'empty': 'No answers provided'
         }
     )
+    explanation_language_in_english = serializers.CharField(
+        max_length=50,
+        required=False
+    )
     guest = serializers.CharField(
         max_length=30,
         required=False,
@@ -106,6 +131,13 @@ class AnswerCheckerSerializer(serializers.Serializer):
         Validate the data.
         """
         guest = self.context.get("guest")
+        explanation_language = data.get("explanation_language")
+
+        if explanation_language and explanation_language.lower() not in supported_languages:
+            raise serializers.ValidationError(
+                "Language not supported"
+            )
+
         if guest:
             normalized_username = re.sub(r"[^a-zA-Z]", "", guest).lower()
             if normalized_username == "tornike":

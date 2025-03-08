@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 from decouple import config  # type: ignore
@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-j6asj=kzd@e$0r25+ugam+u5xg#cskfwnu=%e-l4-@n$+ne@st'
+SECRET_KEY = config("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -46,10 +46,8 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'user',
     'quiz_app',
-    'rosetta',
     'celery',
     'django_celery_results',
-
 ]
 
 AUTH_USER_MODEL = "user.User"
@@ -66,7 +64,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-    # 'middlewares.unauthorized_middleware.AnonymousUserMiddleware'
 ]
 
 ROOT_URLCONF = 'ai_quiz_generator.urls'
@@ -122,30 +119,20 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "ka-ge"
 
-TIME_ZONE = "UTC"
-
-LANGUAGES = [
-    ('en', 'English'),
-    ('ka', 'Georgian'),
-]
-
-USE_I18N = True
-
-USE_TZ = True
+TIME_ZONE = "Asia/Tbilisi"
 
 LOCALE_PATHS = [
     BASE_DIR / "locale"
 ]
 
-USE_L10N = True
 
 EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = "interpredators.django@gmail.com"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config('EMAIL_KEY')
 
 # Static files (CSS, JavaScript, Images)
@@ -183,7 +170,7 @@ REST_FRAMEWORK = {
 CORS_ORIGIN_ALLOW_ALL = True
 CORS_ALLOW_CREDENTIALS = True
 
-CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_BROKER_URL = config('CELERY_BROKER_URL')
 
 task_serializer = "json"
 accept_content = ["application/json"]

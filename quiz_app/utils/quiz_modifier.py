@@ -179,14 +179,13 @@ class QuizUpdater:
     def _handle_answer(self,
                        a_data: dict,
                        question: Question,
-                       answers_to_create: List[Answer]):
+                       answers_to_create: List[Answer]) -> None:
         """
         Handles updating or creating a single answer.
 
         :param a_data: The answer data from the request.
         :param question: The question instance related to this answer.
         :param answers_to_create: A list of new answers for bulk creation.
-        :return:
         """
         a_id: Optional[int] = a_data.get('id')
 

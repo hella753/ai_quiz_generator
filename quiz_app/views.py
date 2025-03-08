@@ -2,7 +2,7 @@ import logging
 
 from rest_framework import status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from rest_framework.mixins import CreateModelMixin
@@ -44,7 +44,8 @@ class QuizViewSet(ErrorHandlingMixin, ModelViewSet):
         "list": [IsAuthenticated()],
         "update": [IsCreator()],
         "destroy": [IsCreator()],
-        "partial_update": [IsCreator()]
+        "partial_update": [IsCreator()],
+        "retrieve": [AllowAny()],
     }
 
     def get_permissions(self):
@@ -71,7 +72,7 @@ class QuizViewSet(ErrorHandlingMixin, ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        data_processor = QuizDataProcessor(request, self)
+        data_processor = QuizDataProcessor(request, serializer.validated_data, self)
         data, status_code, headers = data_processor.process_quiz_data()
         return Response(data, status=status_code, headers=headers)
 
@@ -97,6 +98,11 @@ class QuizViewSet(ErrorHandlingMixin, ModelViewSet):
 class CheckAnswersViewSet(ErrorHandlingMixin,
                           CreateModelMixin,
                           GenericViewSet):
+    """
+    ViewSet for checking quiz answers.
+
+    create: Process quiz submissions and return graded results.
+    """
     queryset = Quiz.objects.select_related('creator')
     serializer_class = AnswerCheckerSerializer
 
@@ -105,6 +111,12 @@ class CheckAnswersViewSet(ErrorHandlingMixin,
     def create(self, request, *args, **kwargs):
         """
         Process quiz submissions and return graded results.
+
+        :param request: Request object.
+        :param args: Arguments.
+        :param kwargs: Keyword arguments.
+
+        :return: Response object.
         """
 
         serializer = self.get_serializer(data=request.data)

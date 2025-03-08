@@ -1,6 +1,3 @@
-from django.db import models
-from django.db.models import Sum
-from django.utils.translation import gettext_lazy as _
 import uuid
 from user.models import User
 from .managers import *
@@ -20,12 +17,12 @@ class ModifiedTimeModel(models.Model):
 
 class Quiz(ModifiedTimeModel):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    name = models.CharField(max_length=150, verbose_name=_("Name"))
+    name = models.CharField(max_length=150, verbose_name="Name")
     creator = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name="quizzes",
-        verbose_name=_("creator"),
+        verbose_name="creator",
     )
 
     def get_total_score(self):
@@ -39,15 +36,15 @@ class Quiz(ModifiedTimeModel):
 
 
 class Question(ModifiedTimeModel):
-    question = models.TextField(verbose_name=_("Question"))
+    question = models.TextField(verbose_name="Question")
     score = models.DecimalField(
-        decimal_places=2, max_digits=5, default=1, verbose_name=_("Score")
+        decimal_places=2, max_digits=5, default=1, verbose_name="Score"
     )
     quiz = models.ForeignKey(
         Quiz,
         on_delete=models.CASCADE,
         related_name="questions",
-        verbose_name=_("Quiz")
+        verbose_name="Quiz"
     )
 
     def __str__(self):
@@ -55,13 +52,13 @@ class Question(ModifiedTimeModel):
 
 
 class Answer(ModifiedTimeModel):
-    answer = models.TextField(verbose_name=_("Answer"))
-    correct = models.BooleanField(default=False, verbose_name=_("Correct"))
+    answer = models.TextField(verbose_name="Answer")
+    correct = models.BooleanField(default=False, verbose_name="Correct")
     question = models.ForeignKey(
         Question,
         on_delete=models.CASCADE,
         related_name="answers",
-        verbose_name=_("Question"),
+        verbose_name="Question"
     )
 
     def __str__(self):
@@ -69,13 +66,13 @@ class Answer(ModifiedTimeModel):
 
 
 class UserAnswer(ModifiedTimeModel):
-    answer = models.TextField(verbose_name=_("Answer"))
-    correct = models.BooleanField(default=False, verbose_name=_("Correct"))
+    answer = models.TextField(verbose_name="Answer")
+    correct = models.BooleanField(default=False, verbose_name="Correct")
     question = models.ForeignKey(
         Question,
         on_delete=models.CASCADE,
         related_name="your_answers",
-        verbose_name=_("Question"),
+        verbose_name="Question",
     )
     user = models.ForeignKey(
         User,
@@ -83,13 +80,13 @@ class UserAnswer(ModifiedTimeModel):
         null=True,
         blank=True,
         related_name="user_answers",
-        verbose_name=_("User"),
+        verbose_name="User",
     )
     guest = models.CharField(max_length=25, null=True, blank=True)
     explanation = models.TextField(
         null=True,
         blank=True,
-        verbose_name=_("Explanation")
+        verbose_name="Explanation"
     )
 
     objects = UserAnswerManager()
@@ -108,7 +105,7 @@ class QuizScore(ModifiedTimeModel):
         Quiz,
         on_delete=models.CASCADE,
         related_name="scores",
-        verbose_name=_("Quiz")
+        verbose_name="Quiz"
     )
     user = models.ForeignKey(
         User,
@@ -116,13 +113,13 @@ class QuizScore(ModifiedTimeModel):
         blank=True,
         on_delete=models.CASCADE,
         related_name="quiz_scores",
-        verbose_name=_("User")
+        verbose_name="User"
     )
     score = models.DecimalField(
         decimal_places=2,
         max_digits=5,
         default=0.0,
-        verbose_name=_("Score")
+        verbose_name="Score"
     )
     guest = models.CharField(max_length=25, null=True, blank=True)
 

@@ -2,13 +2,20 @@ import os
 from datetime import datetime
 import pdfkit
 from django.template.loader import get_template
+from rest_framework.request import Request
 
 
 class ExportToWorksheet:
     """
     Export quiz data to a worksheet.
     """
-    def __init__(self, request, data):
+    def __init__(self, request: Request, data: dict):
+        """
+        Initialize the class.
+
+        :param request: Request an object.
+        :param data: Data to be exported.
+        """
         self.request = request
         self.data = data
         self.questions = data.get("questions")

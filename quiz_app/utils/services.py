@@ -1,6 +1,5 @@
 import copy
 import logging
-import uuid
 from typing import Optional, List, Dict
 from uuid import UUID
 
@@ -11,7 +10,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.request import Request
 from rest_framework.viewsets import ModelViewSet
 
-from quiz_app.exceptions import QuizGenerationError
+from exceptions.custom_exceptions import QuizGenerationError
 from quiz_app.models import Question, Quiz, UserAnswer
 from quiz_app.serializers import QuizSerializer
 from quiz_app.utils import QuizGenerator, FileProcessor
@@ -29,28 +28,37 @@ class QuizGenerationService:
     """
     def generate_quiz_from_file(self,
                                 file: InMemoryUploadedFile,
+                                language: str,
                                 creator_input: str) -> dict:
         """
         Generate a quiz using file content and creator input
+
+        :param file: File object.
+        :param language: Language for quiz generation.
+        :param creator_input: User input for quiz generation.
+
+        :return: Quiz data.
         """
         text = FileProcessor(file).process_file()
-        return self.generate_quiz_data(creator_input, text)
+        return self.generate_quiz_data(creator_input, language, text)
 
     @staticmethod
     def generate_quiz_data(creator_input: str,
+                           language: str,
                            text: Optional[str] = None) -> dict:
         """
         Generate quiz data based on file and/or creator input.
 
         :param creator_input: User input for quiz generation.
+        :param language: Language for quiz generation.
         :param text: Text content for quiz generation.
 
         :return: Quiz data.
         """
         quiz_generator = QuizGenerator()
         if text:
-            return quiz_generator.generate_quiz(creator_input, text)
-        return quiz_generator.generate_quiz(creator_input)
+            return quiz_generator.generate_quiz(creator_input, language, text)
+        return quiz_generator.generate_quiz(creator_input, language)
 
 
 class QuizDataProcessor:
@@ -59,6 +67,7 @@ class QuizDataProcessor:
     """
     def __init__(self,
                  request: Request,
+                 serializer_data: dict,
                  view_instance: ModelViewSet) -> None:
         """
         Initialize the service.
@@ -68,6 +77,7 @@ class QuizDataProcessor:
         """
         self.request = request
         self.view_instance = view_instance
+        self.serializer_data = serializer_data
         self.quiz_data = self._get_quiz_data()
 
     def _get_quiz_data(self) -> dict:
@@ -80,21 +90,24 @@ class QuizDataProcessor:
         # and quiz data will be generated based on the file.
         file = self.request.FILES.get("file")
 
-        topic = self.request.data.get("topic")
-        number_of_questions = self.request.data.get("number_of_questions")
-        type_of_questions = self.request.data.get("type_of_questions")
+        topic = self.serializer_data.get("topic")
+        number_of_questions = self.serializer_data.get("number_of_questions")
+        type_of_questions = self.serializer_data.get("type_of_questions")
+        language = self.serializer_data.get("language")
 
-        creator_input = (f"Generate a quiz with {number_of_questions} "
-                         f"{type_of_questions} questions about {topic}")
+        creator_input = (f"Generate a quiz in {language} language "
+                         f"with {number_of_questions} "
+                         f"{type_of_questions} questions about {topic}.")
 
         quiz_service = QuizGenerationService()
         try:
             if file:
                 return quiz_service.generate_quiz_from_file(
                     file,
+                    language,
                     creator_input
                 )
-            return quiz_service.generate_quiz_data(creator_input)
+            return quiz_service.generate_quiz_data(creator_input, language)
         except QuizGenerationError as e:
             return {'error': str(e), 'status': status.HTTP_400_BAD_REQUEST}
 
@@ -153,6 +166,7 @@ class QuizSubmissionCheckerService:
         try:
             answer_data = data.get('_user_answers', [])
             is_guest = data.get('guest', False)
+            language = data.get('language', 'English')
 
             # Get the Quiz Object
             first_question = answer_data[0].get("question_id")
@@ -165,7 +179,7 @@ class QuizSubmissionCheckerService:
                 )
 
             # Check the answers and save the results
-            results = QuizGenerator().check_answers(str(answer_data))
+            results = QuizGenerator().check_answers(language, str(answer_data))
 
             ai_results = copy.deepcopy(results)
 

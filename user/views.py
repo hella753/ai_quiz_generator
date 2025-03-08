@@ -35,6 +35,8 @@ class UserViewSet(CreateModelMixin, GenericViewSet):
 
     Allows anonymous users to create new accounts, which are set to inactive
     until verified through an email link.
+
+    create: Register a new user.
     """
     serializer_class = RegistrationSerializer
     pagination_class = CustomPaginator
@@ -81,6 +83,10 @@ class TakenQuizViewSet(ReadOnlyModelViewSet):
     """
     This ViewSet is responsible for getting
     the quizzes taken by the user.
+
+    list: Get the quizzes taken by the user.
+    retrieve: Get detailed information about a specific
+    quiz taken by the user.
     """
     serializer_class = UserQuizSerializer
     pagination_class = CustomPaginator
@@ -90,6 +96,8 @@ class TakenQuizViewSet(ReadOnlyModelViewSet):
         """
         This method is responsible for getting the quizzes
         with scores taken by the user.
+
+        :return: Queryset of quizzes taken by the user.
         """
         queryset = Quiz.objects.filter(
             questions__your_answers__user=self.request.user
@@ -105,11 +113,13 @@ class TakenQuizViewSet(ReadOnlyModelViewSet):
         return queryset
 
 
-class CreatedQuizViewSet(RetrieveModelMixin,
-                         ListModelMixin,
-                         GenericViewSet):
+class CreatedQuizViewSet(ReadOnlyModelViewSet):
     """
     This ViewSet is responsible for getting quizzes created by the user.
+
+    list: Get the quizzes created by the user.
+    retrieve: Get detailed information about a specific
+    quiz created by the user.
     """
     serializer_class = SerializerFactory(  # type: ignore
         default=QuizForCreatorSerializer,
@@ -125,6 +135,8 @@ class CreatedQuizViewSet(RetrieveModelMixin,
         """
         This method is responsible for getting the quizzes
         created by the user.
+
+        :return: Queryset of quizzes created by the user.
         """
         if self.request.user.is_authenticated:
             return Quiz.objects.filter(creator=self.request.user)
@@ -133,6 +145,8 @@ class CreatedQuizViewSet(RetrieveModelMixin,
     def get_permissions(self):
         """
         This method is responsible for getting the permissions
+
+        :return: List of permissions.
         """
         if self.action == "retrieve":
             return [IsAuthenticated(), CanSeeAnalysis()]
@@ -170,6 +184,11 @@ class CreatedQuizViewSet(RetrieveModelMixin,
     def analytics(self, request, pk=None):
         """
         Get analytics for a specific quiz.
+
+        :param request: Request an object.
+        :param pk: Primary key of the quiz.
+
+        :return: Response object.
         """
         success, result, status_code = (
             self.analytics_service.get_quiz_analytics(pk, request.user)

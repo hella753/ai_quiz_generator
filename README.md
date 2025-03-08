@@ -1,6 +1,7 @@
 # AI Quiz Generator
-Backend API built with **Django**, for AI Quiz Generator which uses openAI api. Provides endpoints to handle Quiz Generating, 
-Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to Develop their skills and make studying easier.
+Backend API built with **Django Rest Framework**, for AI Quiz Generator which uses openAI api. Provides endpoints to handle Quiz Generating, 
+Quiz Correcting and Authorization. Has additional features like email sending, working with files, exporting to worksheet quiz and basic statistics for users
+Excellent Tool for Teachers and Students to Develop their skills and make studying easier.
 
 ![Logo](/logo.png)
 
@@ -15,31 +16,41 @@ Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to D
 - [Components](#components)
   - [Models](#models)
   - [Serializers](#serializers)
-  - [Views](#views)
+  - [Viewsets and Views](#viewsets-and-views)
   - [Permissions](#permissions)
   - [URLs](#urls)
+- [Services](#services) 
+  - [Email Sending](#email-sending)
+  - [AI Integration](#ai-integration)
+  - [File Handling](#file-handling)
+  - [Managers](#managers)
+  - [Statistics](#statistics)
 - [Installation](#installation)
 - [Credits](#Credits)
 
 
 ## Features
 - **User Authentication**: User registration, login, and authentication via JWT. Unauthorized users are represented as Guests.
-- **Quiz Generating**: Endpoints for Quiz Generating(with subject or via uploaded file), Editing, Destroying, Listing and Retrieving.
+- **Quiz Generating**: Endpoints for Quiz Generating (with a subject or via uploaded file), Editing, Destroying, Listing and Retrieving.
 - **Quiz Correcting**: Endpoint for Checking Answers of the users with AI and explaining correct answers in detail.
+- **Personal Accounts**: Endpoints for Listing all quizzes user took, Listing all quizzes user created, Retrieving specific quiz and displaying basic statistics.
+- **AI Integration**: Uses OpenAI API for checking answers and providing explanations.
+- **File Handling**: Handles file uploading and exporting to worksheet quiz.
 - **Permissions & Security**: Custom permissions and exceptions for ensuring data privacy and security.
-- **Middleware**: Middleware for handling Guest sessions.
 - **Email Sending**: Handles Message Sending to registered users and creators.
 - **Managers**: Provides some basic statistics for the users.
-- **Internationalization and localization**.
+- **Multiple Language Support**.
 - **Pagination**: Pagination support for large datasets. 
 
 
 ## Endpoints
 ### User Authentication
 - `POST /accounts/create-user`: Registers a new user.
-- `GET /accounts/`: Listing of all the users if authenticated.
 - `POST /api/token/`: Provides a JWT token.
 - `POST /api/token/refresh/`: Provides refresh JWT token.
+- `PUT /change-password/`: Changes user password.
+- `POST /forgot-password/request/`: Sends an email with a link to reset the password.
+- `POST /forgot-password/reset/<uuid:token>/`: Resets the user password.
 ### Quiz Generating
 - `GET /api/quiz/`: Lists all quizzes if authenticated.
 - `POST /api/quiz/`: Creates a new quiz (authenticated only).
@@ -52,6 +63,7 @@ Quiz Correcting and Authorization. Excellent Tool for Teachers and Students to D
 - `GET /accounts/taken-quiz/{username}/`: Lists all quizzes user took (Himself Only).
 - `GET /accounts/created-quiz/`: Lists all quizzes user created. 
 - `GET /accounts/created-quiz/{id}/`: Retrieves the specific quiz and displays basic statistics.
+
 
 ## Components
 
@@ -70,29 +82,20 @@ The backend uses Django ORM to define models representing entities like `User`, 
 ### Serializers
 Django Rest Framework serializers are used for converting model instances into JSON format and vice versa.
 
-- **AnswerSerializer**: Serializes answer data for CRUD operations.
-- **QuestionSerializer**: Serializes question data for CRUD operations.
-- **QuizSerializer**: Serializes quiz data for CRUD operations.
-- **InputSerializer**: Serializes input data for quiz generating.
-- **AnswerCheckerSerializer**: Serializes input data for checking answers.
-- **UserAnswerCheckerSerializer**: Serializes output data for checking and creating answers.
-- **RegistrationSerializer**: Serializes input data for user registration.
-- **UserAnswerSerializer/UserQuestionSerializer/UserQuizSerializer**: Serializes data for personal account viewset.
-- **QuizScoreSerializer**: Serializes data for quiz score.
-- **QuizForCreatorSerializer**: Serializes data for quiz creator viewset.
-- **CreatedQuizeDeatilSerializer**: Serializes data for quiz creator detail viewset.
-- **QuizAnalysisSerializer**: Serializes data for quiz analysis.
-- **HardestQuestionSerializer**: Serializes data for hardest question.
+- **User app**: Contains serializers for User Creation, User Password Change, User Password Reset, Quiz Score and Analysis.
+- **Quiz app**: Contains serializers for Quiz Creation, Quiz Update, Quiz Retrieve and Listing, Answer Checking, UserAnswer Creation.
 
+### ViewSets and Views
+Django Rest Framework Views and ViewSets are used for handling CRUD operations for models.
 
-### ViewSets
-Django Rest Framework viewsets are used for handling CRUD operations for models.
-
-- **QuizViewSet**: Generates Quiz and handles CRUD operations.
-- **AnswerCheckerViewSet**: Checks answers with AI and creates UserAnswer objects.
+- **QuizViewSet**: Generates Quiz with AI and handles CRUD operations with the help of `QuizCreator` and `QuizUpdater`.
+- **AnswerCheckerViewSet**: Checks answers with AI and creates UserAnswer objects with Total Score.
 - **CreateUserViewSet**: Registers a new user.
 - **TakenQuizViewSet**: Lists all quizzes user took.
-- **CreatedQuizViewSet**: Lists all quizzes user created with statistics.
+- **CreatedQuizViewSet**: Lists all quizzes users created with statistics.
+- **ChangePasswordView**: Changes user password.
+- **RequestPasswordResetView**: Sends an email with a link to reset the password.
+- **ResetPasswordView**: Resets the user password.
 
 
 ### Permissions
@@ -107,6 +110,31 @@ The URLs are routed through Django’s URL dispatcher.
 - `accounts/`: Base URL for user authentication.
 - `/`: Swagger API documentation.
 
+
+## Services
+
+### Email Sending
+- Send an email with a link to reset the password
+- Email the creator of the quiz if the user takes the quiz.
+- Verify the email address of the user during registration.
+
+### AI Integration
+- `QuizGenerationService`, `QuizSubmissionCheckerService`, `QuizDataProcessor` in `services.py` and `QuizGenerator` 
+in `ai_generator.py` are responsible for handling AI integration with the OpenAI API with the help of pydantic.
+
+### File Handling
+- `FileProcessor` in `file_processor.py` is responsible for handling file uploading.
+- `ExportToWorksheet` in `worksheet.py` is responsible for exporting the quiz to a worksheet.
+
+### Managers
+- `QuizManager` in `managers.py` is responsible for providing basic statistics for the users.
+- `UserAnswerManager` in `managers.py` is responsible for providing basic statistics for the users.
+
+### Statistics
+- `QuizRetrievalService` and `QuizAnalyticsService` are responsible for providing basic statistics for the user creators. Which include:
+  - What percentage of the users answered the question correctly or incorrectly.
+  - What are the most challenging questions for the users?
+  - Users who took the quiz with their scores and answers.
 
 ## Installation
 To set up the project locally, follow these steps:
@@ -128,15 +156,30 @@ To set up the project locally, follow these steps:
     ```bash
     python manage.py migrate
     ```
-   
-4. Create a superuser:
+
+4. Environment  Variables: 
+    - Create a `.env` file in the root directory and add the following variables:
+    ```bash
+    OPEN_AI_SECRET_KEY
+    EMAIL_KEY
+    WKHTMLTOPDF_PATH
+    CELERY_BROKER_URL
+    DJANGO_SECRET_KEY
+   ```
+
+5. Create a superuser:
     ```bash
     python manage.py createsuperuser
     ```
    
-5. Run the development server:
+6. Run the development server:
     ```bash
     python manage.py runserver
+    ```
+
+7. Run Celery:
+    ```bash
+    celery -A ai_quiz_generator worker --loglevel=info --pool=solo
     ```
 
 ## Credits

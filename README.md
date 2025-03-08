@@ -1,7 +1,7 @@
 # AI Quiz Generator
-Backend API built with **Django Rest Framework**, for AI Quiz Generator which uses openAI api. Provides endpoints to handle Quiz Generating, 
-Quiz Correcting and Authorization. Has additional features like email sending, working with files, exporting to worksheet quiz and basic statistics for users
-Excellent Tool for Teachers and Students to Develop their skills and make studying easier.
+An AI-powered Quiz Generator API built with Django Rest Framework, integrating OpenAI's API to streamline quiz creation and evaluation. This API offers endpoints for quiz generation, automated grading, and user authentication. Additional features include asynchronous email notifications, file handling, quiz export to worksheets, and basic user statistics. Designed as a powerful tool for educators and students, it enhances learning by simplifying quiz management and assessment. Users can generate quizzes, share links for participation, 
+and receive AI-driven corrections with detailed scores, answers, and explanations—accessible to 
+both authorized and unauthorized participants, however, only authorized users can create the quiz. 
 
 ![Logo](/logo.png)
 

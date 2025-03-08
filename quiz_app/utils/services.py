@@ -90,7 +90,7 @@ class QuizDataProcessor:
         # and quiz data will be generated based on the file.
         file = self.request.FILES.get("file")
 
-        topic = self.serializer_data.get("topic")
+        topic = self.serializer_data.get("topic_in_preferred_language")
         number_of_questions = self.serializer_data.get("number_of_questions")
         type_of_questions = self.serializer_data.get("type_of_questions")
         language = self.serializer_data.get("language")

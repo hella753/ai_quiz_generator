@@ -2,7 +2,6 @@ import re
 from rest_framework import serializers
 from exceptions import DenyTornikeException
 from .models import *
-from .utils.helpers.supported_languages import supported_languages
 from .utils.quiz_modifier import QuizCreator, QuizUpdater
 
 
@@ -54,7 +53,7 @@ class InputSerializer(serializers.Serializer):
     number_of_questions = serializers.IntegerField()
     topic_in_preferred_language = serializers.CharField(max_length=150, required=False)
     file = serializers.FileField(required=False)
-    language_in_english = serializers.CharField(max_length=50, required=False)
+    language = serializers.CharField(max_length=50, required=False)
 
     def validate(self, data):
         """
@@ -62,14 +61,10 @@ class InputSerializer(serializers.Serializer):
         """
         number_of_questions = int(data.get("number_of_questions"))
         type_of_questions = data.get("type_of_questions")
-        language = data.get("language_in_english")
+        language = data.get("language")
         topic = data.get("topic_in_preferred_language")
         file = data.get("file")
 
-        if language and language.lower() not in supported_languages:
-            raise serializers.ValidationError(
-                "Language not supported"
-            )
         if not file and not topic:
             raise serializers.ValidationError(
                 "One of the fields should be provided (file or topic)"

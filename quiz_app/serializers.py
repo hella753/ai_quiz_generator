@@ -111,7 +111,7 @@ class AnswerCheckerSerializer(serializers.Serializer):
             'empty': 'No answers provided'
         }
     )
-    explanation_language_in_english = serializers.CharField(
+    explanation_language = serializers.CharField(
         max_length=50,
         required=False
     )
@@ -127,11 +127,6 @@ class AnswerCheckerSerializer(serializers.Serializer):
         """
         guest = self.context.get("guest")
         explanation_language = data.get("explanation_language")
-
-        if explanation_language and explanation_language.lower() not in supported_languages:
-            raise serializers.ValidationError(
-                "Language not supported"
-            )
 
         if guest:
             normalized_username = re.sub(r"[^a-zA-Z]", "", guest).lower()

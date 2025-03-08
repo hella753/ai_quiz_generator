@@ -166,7 +166,7 @@ class QuizSubmissionCheckerService:
         try:
             answer_data = data.get('_user_answers', [])
             is_guest = data.get('guest', False)
-            language = data.get('language', 'English')
+            language = data.get('explanation_language', 'English')
 
             # Get the Quiz Object
             first_question = answer_data[0].get("question_id")

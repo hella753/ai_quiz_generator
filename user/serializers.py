@@ -151,7 +151,7 @@ class CreatedQuizDetailSerializer(serializers.Serializer):
     id = serializers.CharField()
     name = serializers.CharField()
     creator = serializers.CharField()
-    total_score = serializers.IntegerField()
+    total_score = serializers.FloatField()
     users_count = serializers.IntegerField()
     users = serializers.ListField(child=serializers.DictField())
 

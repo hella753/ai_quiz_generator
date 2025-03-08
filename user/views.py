@@ -152,7 +152,6 @@ class CreatedQuizViewSet(ReadOnlyModelViewSet):
             return [IsAuthenticated(), CanSeeAnalysis()]
         return super().get_permissions()
 
-    @method_decorator(cache_page(10 * 1))
     def retrieve(self, request, *args, **kwargs):
         """
         Retrieve detailed information about a specific quiz.
